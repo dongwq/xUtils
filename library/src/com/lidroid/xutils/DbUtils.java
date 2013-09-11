@@ -376,6 +376,13 @@ public class DbUtils {
         return findFirst(selector);
     }
 
+    /**
+     * 直接查询全部，可以不加条件
+     * @param selector
+     * @param <T>
+     * @return
+     * @throws DbException
+     */
     @SuppressWarnings("unchecked")
     public <T> List<T> findAll(Selector selector) throws DbException {
         if (!tableIsExist(selector.getEntityType())) return null;
