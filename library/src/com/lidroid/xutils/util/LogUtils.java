@@ -34,6 +34,13 @@ public class LogUtils {
     private LogUtils() {
     }
 
+    public static final int VERBOSE = 2;
+    public static final int DEBUG = 3;
+    public static final int INFO = 4;
+    public static final int WARN = 5;
+    public static final int ERROR = 6;
+    public static final int ASSERT = 7;
+
     public static boolean allowD = true;
     public static boolean allowE = true;
     public static boolean allowI = true;
@@ -42,7 +49,7 @@ public class LogUtils {
     public static boolean allowWtf = true;
 
     private static String generateTag(StackTraceElement caller) {
-        String tag = "%s[%s, %d]";
+        String tag = "%s.%s()[%d]";
         String callerClazzName = caller.getClassName();
         callerClazzName = callerClazzName.substring(callerClazzName.lastIndexOf(".") + 1);
         tag = String.format(tag, callerClazzName, caller.getMethodName(), caller.getLineNumber());
