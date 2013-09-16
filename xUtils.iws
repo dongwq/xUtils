@@ -36,6 +36,8 @@
     <file path="$PROJECT_DIR$/../so-beauty/src/com/itgongfu/it/ui/fragment/BeanFragment.java" changelist="cf637b89-5ab6-4010-b953-ca9c7c6cb90a" time="1378798903355" ignored="false" />
     <file path="/fragment.java" changelist="cf637b89-5ab6-4010-b953-ca9c7c6cb90a" time="1378800218215" ignored="false" />
     <file path="$PROJECT_DIR$/../so-beauty/src/com/itgongfu/it/ui/activity/MyInfoActivity.java" changelist="cf637b89-5ab6-4010-b953-ca9c7c6cb90a" time="1378800587307" ignored="false" />
+    <file path="$PROJECT_DIR$/../Android/src/com/teambition/bean/Member.java" changelist="cf637b89-5ab6-4010-b953-ca9c7c6cb90a" time="1379304452228" ignored="false" />
+    <file path="/Member.java" changelist="cf637b89-5ab6-4010-b953-ca9c7c6cb90a" time="1379304451287" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,15 +98,6 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="Table.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/db/annotation/Table.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="24" column="18" selection-start="900" selection-end="900" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="NotNull.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/db/annotation/NotNull.java">
           <provider selected="true" editor-type-id="text-editor">
@@ -144,7 +137,7 @@
       <file leaf-file-name="BitmapDisplayConfig.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/bitmap/BitmapDisplayConfig.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="24" column="13" selection-start="934" selection-end="934" vertical-scroll-proportion="0.0">
+            <state line="28" column="13" selection-start="1076" selection-end="1076" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -153,7 +146,7 @@
       <file leaf-file-name="BitmapGlobalConfig.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/bitmap/BitmapGlobalConfig.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="146" column="17" selection-start="4882" selection-end="4882" vertical-scroll-proportion="0.0">
+            <state line="147" column="17" selection-start="4913" selection-end="4913" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -162,16 +155,25 @@
       <file leaf-file-name="MyActivity.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sample/src/com/lidroid/xutils/sample/MyActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="287" column="3" selection-start="9717" selection-end="9717" vertical-scroll-proportion="0.0">
+            <state line="71" column="3" selection-start="2448" selection-end="2448" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ViewCustomEventListener.java" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="ViewCustomEventListener.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/view/ViewCustomEventListener.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="13" column="27" selection-start="309" selection-end="309" vertical-scroll-proportion="0.2795031">
+            <state line="13" column="0" selection-start="313" selection-end="313" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Member.java" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/../../../Shared/android-sdk-macosx/sources/android-18/java/lang/reflect/Member.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="26" column="17" selection-start="1000" selection-end="1000" vertical-scroll-proportion="0.052837573">
               <folding />
             </state>
           </provider>
@@ -180,7 +182,7 @@
       <file leaf-file-name="DbUtils.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/DbUtils.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="479" column="51" selection-start="14770" selection-end="14770" vertical-scroll-proportion="0.0">
+            <state line="514" column="51" selection-start="15766" selection-end="15766" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -289,6 +291,28 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="sample" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="xUtils" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="xUtils" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="sample" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="gen" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -494,7 +518,7 @@
     <frame x="20" y="22" width="1900" height="970" extended-state="0" />
     <editor active="false" />
     <layout>
-      <window_info id="Changes" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.20941177" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Changes" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.36588237" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="JetGradle" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -503,14 +527,14 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32941177" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32941177" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Android" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.49764705" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32941177" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24973032" sideWeight="0.50235295" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.22707659" sideWeight="0.79058826" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.22707659" sideWeight="0.63411766" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32941177" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Palette&#9;" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32955772" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -586,14 +610,6 @@
     <breakpoint-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/sample/res/layout/main.xml">
-      <provider editor-type-id="android-designer">
-        <state />
-      </provider>
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="16" column="24" selection-start="652" selection-end="652" vertical-scroll-proportion="-4.6153846" />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/util/core/LruDiskCache.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="78" column="19" selection-start="3624" selection-end="3624" vertical-scroll-proportion="0.0" />
@@ -662,35 +678,42 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/bitmap/BitmapDisplayConfig.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="13" selection-start="934" selection-end="934" vertical-scroll-proportion="0.0">
+        <state line="28" column="13" selection-start="1076" selection-end="1076" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/bitmap/BitmapGlobalConfig.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="146" column="17" selection-start="4882" selection-end="4882" vertical-scroll-proportion="0.0">
+        <state line="147" column="17" selection-start="4913" selection-end="4913" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/DbUtils.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="479" column="51" selection-start="14770" selection-end="14770" vertical-scroll-proportion="0.0">
+        <state line="514" column="51" selection-start="15766" selection-end="15766" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/sample/src/com/lidroid/xutils/sample/MyActivity.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="287" column="3" selection-start="9717" selection-end="9717" vertical-scroll-proportion="0.0">
+        <state line="71" column="3" selection-start="2448" selection-end="2448" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/library/src/com/lidroid/xutils/view/ViewCustomEventListener.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="27" selection-start="309" selection-end="309" vertical-scroll-proportion="0.2795031">
+        <state line="13" column="0" selection-start="313" selection-end="313" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../Shared/android-sdk-macosx/sources/android-18/java/lang/reflect/Member.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="26" column="17" selection-start="1000" selection-end="1000" vertical-scroll-proportion="0.052837573">
           <folding />
         </state>
       </provider>
