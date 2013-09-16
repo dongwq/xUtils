@@ -16,6 +16,7 @@
 package com.lidroid.xutils.util.core;
 
 import com.lidroid.xutils.util.IOUtils;
+import com.lidroid.xutils.util.LogUtils;
 import org.apache.http.protocol.HTTP;
 
 import java.io.*;
@@ -220,12 +221,11 @@ public final class LruDiskCache implements Closeable {
                         new OutputStreamWriter(new FileOutputStream(cache.journalFile, true), HTTP.US_ASCII));
                 return cache;
             } catch (IOException journalIsCorrupt) {
-                System.out
-                        .println("DiskLruCache "
-                                + directory
-                                + " is corrupt: "
-                                + journalIsCorrupt.getMessage()
-                                + ", removing");
+                LogUtils.e("DiskLruCache "
+                        + directory
+                        + " is corrupt: "
+                        + journalIsCorrupt.getMessage()
+                        + ", removing", journalIsCorrupt);
                 cache.delete();
             }
         }
@@ -400,6 +400,18 @@ public final class LruDiskCache implements Closeable {
         }
         if (!from.renameTo(to)) {
             throw new IOException();
+        }
+    }
+
+    public synchronized long getExpiryTimestamp(String key) throws IOException {
+        String diskKey = DiskCacheKeyGenerator.generate(key);
+        checkNotClosed();
+        validateKey(diskKey);
+        Entry entry = lruEntries.get(diskKey);
+        if (entry == null) {
+            return 0;
+        } else {
+            return entry.expiryTimestamp;
         }
     }
 
@@ -1039,7 +1051,7 @@ public final class LruDiskCache implements Closeable {
             if (file.isDirectory()) {
                 deleteContents(file);
             }
-            if (!file.delete()) {
+            if (file.exists() && !file.delete()) {
                 throw new IOException("failed to delete file: " + file);
             }
         }

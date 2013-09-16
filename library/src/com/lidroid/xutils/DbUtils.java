@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DbUtils {
 
@@ -335,12 +336,24 @@ public class DbUtils {
     @SuppressWarnings("unchecked")
     public <T> T findById(Class<T> entityType, Object idValue) throws DbException {
         if (!tableIsExist(entityType)) return null;
+
         Id id = Table.get(entityType).getId();
         Selector selector = Selector.from(entityType).where(WhereBuilder.b(id.getColumnName(), "=", idValue));
-        Cursor cursor = execQuery(selector.limit(1).toString());
+
+        String sql = selector.limit(1).toString();
+        long seq = CursorUtils.FindCacheSequence.getSeq();
+        findTempCache.setSeq(seq);
+        Object obj = findTempCache.get(sql);
+        if (obj != null) {
+            return (T) obj;
+        }
+
+        Cursor cursor = execQuery(sql);
         try {
             if (cursor.moveToNext()) {
-                return (T) CursorUtils.getEntity(this, cursor, selector.getEntityType());
+                T entity = (T) CursorUtils.getEntity(this, cursor, entityType, seq);
+                findTempCache.put(sql, entity);
+                return entity;
             }
         } finally {
             IOUtils.closeQuietly(cursor);
@@ -351,10 +364,21 @@ public class DbUtils {
     @SuppressWarnings("unchecked")
     public <T> T findFirst(Selector selector) throws DbException {
         if (!tableIsExist(selector.getEntityType())) return null;
-        Cursor cursor = execQuery(selector.limit(1).toString());
+
+        String sql = selector.limit(1).toString();
+        long seq = CursorUtils.FindCacheSequence.getSeq();
+        findTempCache.setSeq(seq);
+        Object obj = findTempCache.get(sql);
+        if (obj != null) {
+            return (T) obj;
+        }
+
+        Cursor cursor = execQuery(sql);
         try {
             if (cursor.moveToNext()) {
-                return (T) CursorUtils.getEntity(this, cursor, selector.getEntityType());
+                T entity = (T) CursorUtils.getEntity(this, cursor, selector.getEntityType(), seq);
+                findTempCache.put(sql, entity);
+                return entity;
             }
         } finally {
             IOUtils.closeQuietly(cursor);
@@ -386,12 +410,23 @@ public class DbUtils {
     @SuppressWarnings("unchecked")
     public <T> List<T> findAll(Selector selector) throws DbException {
         if (!tableIsExist(selector.getEntityType())) return null;
-        Cursor cursor = execQuery(selector.toString());
+
+        String sql = selector.toString();
+        long seq = CursorUtils.FindCacheSequence.getSeq();
+        findTempCache.setSeq(seq);
+        Object obj = findTempCache.get(sql);
+        if (obj != null) {
+            return (List<T>) obj;
+        }
+
+        Cursor cursor = execQuery(sql);
         List<T> result = new ArrayList<T>();
         try {
             while (cursor.moveToNext()) {
-                result.add((T) CursorUtils.getEntity(this, cursor, selector.getEntityType()));
+                T entity = (T) CursorUtils.getEntity(this, cursor, selector.getEntityType(), seq);
+                result.add(entity);
             }
+            findTempCache.put(sql, result);
         } finally {
             IOUtils.closeQuietly(cursor);
         }
@@ -617,7 +652,6 @@ public class DbUtils {
         } else {
             LogUtils.w("List<KeyValue> is empty or ContentValues is empty!");
         }
-
     }
 
     private void createTableIfNotExist(Class<?> entityType) throws DbException {
@@ -737,6 +771,38 @@ public class DbUtils {
             return database.rawQuery(sql, null);
         } catch (Exception e) {
             throw new DbException(e);
+        }
+    }
+
+    /////////////////////// temp cache ////////////////////////////////////////////////////////////////
+    private final FindTempCache findTempCache = new FindTempCache();
+
+    private class FindTempCache {
+        private FindTempCache() {
+        }
+
+        /**
+         * key: sql;
+         * value: find result
+         */
+        private final ConcurrentHashMap<String, Object> cache = new ConcurrentHashMap<String, Object>();
+
+        private long seq = 0;
+
+        public void put(String sql, Object result) {
+            cache.put(sql, result);
+        }
+
+        @SuppressWarnings("unchecked")
+        public Object get(String sql) {
+            return cache.get(sql);
+        }
+
+        public void setSeq(long seq) {
+            if (this.seq != seq) {
+                cache.clear();
+                this.seq = seq;
+            }
         }
     }
 

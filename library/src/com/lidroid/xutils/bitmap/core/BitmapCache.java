@@ -16,6 +16,7 @@
 package com.lidroid.xutils.bitmap.core;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import com.lidroid.xutils.bitmap.BitmapDisplayConfig;
 import com.lidroid.xutils.bitmap.BitmapGlobalConfig;
 import com.lidroid.xutils.util.IOUtils;
@@ -24,14 +25,15 @@ import com.lidroid.xutils.util.core.LruDiskCache;
 import com.lidroid.xutils.util.core.LruMemoryCache;
 
 import java.io.*;
+import java.lang.ref.SoftReference;
 
 
 public class BitmapCache {
 
     private static final int DISK_CACHE_INDEX = 0;
 
-    private LruDiskCache mDiskLruCache;
-    private LruMemoryCache<String, Bitmap> mMemoryCache;
+    private static LruDiskCache mDiskLruCache;
+    private static LruMemoryCache<String, SoftReference<Bitmap>> mMemoryCache;
 
     private final Object mDiskCacheLock = new Object();
     private boolean isDiskCacheReadied = false;
@@ -61,14 +63,14 @@ public class BitmapCache {
             } catch (Exception e) {
             }
         }
-        mMemoryCache = new LruMemoryCache<String, Bitmap>(globalConfig.getMemoryCacheSize()) {
+        mMemoryCache = new LruMemoryCache<String, SoftReference<Bitmap>>(globalConfig.getMemoryCacheSize()) {
             /**
              * Measure item size in bytes rather than units which is more practical
              * for a bitmap cache
              */
             @Override
-            protected int sizeOf(String key, Bitmap bitmap) {
-                return BitmapCommonUtils.getBitmapSize(bitmap);
+            protected int sizeOf(String key, SoftReference<Bitmap> bitmapRef) {
+                return BitmapCommonUtils.getBitmapSize(bitmapRef.get());
             }
         };
     }
@@ -145,6 +147,7 @@ public class BitmapCache {
                                 bitmapMeta.expiryTimestamp = globalConfig.getDownloader().downloadToStream(uri, outputStream);
                                 if (bitmapMeta.expiryTimestamp < 0) {
                                     editor.abort();
+                                    return null;
                                 } else {
                                     editor.setEntryExpiryTimestamp(bitmapMeta.expiryTimestamp);
                                     editor.commit();
@@ -163,6 +166,8 @@ public class BitmapCache {
                 outputStream = new ByteArrayOutputStream();
                 bitmapMeta.expiryTimestamp = globalConfig.getDownloader().downloadToStream(uri, outputStream);
                 if (bitmapMeta.expiryTimestamp < 0) {
+                    return null;
+                } else {
                     bitmapMeta.data = ((ByteArrayOutputStream) outputStream).toByteArray();
                 }
             }
@@ -192,9 +197,25 @@ public class BitmapCache {
 
         Bitmap bitmap = null;
         if (bitmapMeta.inputStream != null) {
-            bitmap = BitmapDecoder.decodeSampledBitmapFromDescriptor(bitmapMeta.inputStream.getFD(), config.getBitmapMaxWidth(), config.getBitmapMaxHeight());
+            if (config.isShowOriginal()) {
+                bitmap = BitmapFactory.decodeFileDescriptor(bitmapMeta.inputStream.getFD());
+            } else {
+                bitmap = BitmapDecoder.decodeSampledBitmapFromDescriptor(
+                        bitmapMeta.inputStream.getFD(),
+                        config.getBitmapMaxWidth(),
+                        config.getBitmapMaxHeight(),
+                        config.getBitmapConfig());
+            }
         } else if (bitmapMeta.data != null) {
-            bitmap = BitmapDecoder.decodeSampledBitmapFromByteArray(bitmapMeta.data, config.getBitmapMaxWidth(), config.getBitmapMaxHeight());
+            if (config.isShowOriginal()) {
+                bitmap = BitmapFactory.decodeByteArray(bitmapMeta.data, 0, bitmapMeta.data.length);
+            } else {
+                bitmap = BitmapDecoder.decodeSampledBitmapFromByteArray(
+                        bitmapMeta.data,
+                        config.getBitmapMaxWidth(),
+                        config.getBitmapMaxHeight(),
+                        config.getBitmapConfig());
+            }
         } else {
             return null;
         }
@@ -203,11 +224,10 @@ public class BitmapCache {
             return null;
         }
 
-        String key = uri + config.toString();
-
         // add to memory cache
-        if (globalConfig.isMemoryCacheEnabled() && mMemoryCache != null && mMemoryCache.get(key) == null) {
-            mMemoryCache.put(key, bitmap, bitmapMeta.expiryTimestamp);
+        String key = uri + config.toString();
+        if (globalConfig.isMemoryCacheEnabled() && mMemoryCache != null) {
+            mMemoryCache.put(key, new SoftReference<Bitmap>(bitmap), bitmapMeta.expiryTimestamp);
         }
 
         return bitmap;
@@ -221,9 +241,10 @@ public class BitmapCache {
      * @return The bitmap if found in cache, null otherwise
      */
     public Bitmap getBitmapFromMemCache(String uri, BitmapDisplayConfig config) {
-        String key = config == null ? uri : uri + config.toString();
+        String key = uri + config.toString();
         if (mMemoryCache != null) {
-            return mMemoryCache.get(key);
+            SoftReference<Bitmap> softRef = mMemoryCache.get(key);
+            return softRef == null ? null : softRef.get();
         }
         return null;
     }
@@ -236,6 +257,7 @@ public class BitmapCache {
      * @return
      */
     public Bitmap getBitmapFromDiskCache(String uri, BitmapDisplayConfig config) {
+        if (!globalConfig.isDiskCacheEnabled()) return null;
         synchronized (mDiskCacheLock) {
             while (!isDiskCacheReadied) {
                 try {
@@ -248,7 +270,25 @@ public class BitmapCache {
                 try {
                     snapshot = mDiskLruCache.get(uri);
                     if (snapshot != null) {
-                        return BitmapDecoder.decodeSampledBitmapFromDescriptor(snapshot.getInputStream(DISK_CACHE_INDEX).getFD(), config.getBitmapMaxWidth(), config.getBitmapMaxHeight());
+                        Bitmap bitmap = null;
+                        if (config.isShowOriginal()) {
+                            bitmap = BitmapFactory.decodeFileDescriptor(
+                                    snapshot.getInputStream(DISK_CACHE_INDEX).getFD());
+                        } else {
+                            bitmap = BitmapDecoder.decodeSampledBitmapFromDescriptor(
+                                    snapshot.getInputStream(DISK_CACHE_INDEX).getFD(),
+                                    config.getBitmapMaxWidth(),
+                                    config.getBitmapMaxHeight(),
+                                    config.getBitmapConfig());
+                        }
+
+                        // add to memory cache
+                        String key = uri + config.toString();
+                        if (globalConfig.isMemoryCacheEnabled() && mMemoryCache != null && bitmap != null) {
+                            mMemoryCache.put(key, new SoftReference<Bitmap>(bitmap), mDiskLruCache.getExpiryTimestamp(uri));
+                        }
+
+                        return bitmap;
                     }
                 } catch (final IOException e) {
                     LogUtils.e(e.getMessage(), e);
@@ -297,7 +337,7 @@ public class BitmapCache {
     }
 
     public void clearMemoryCache(String uri, BitmapDisplayConfig config) {
-        String key = config == null ? uri : uri + config.toString();
+        String key = uri + config.toString();
         if (mMemoryCache != null) {
             mMemoryCache.remove(key);
         }

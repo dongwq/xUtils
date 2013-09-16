@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package com.lidroid.xutils.sample;
+package com.lidroid.xutils.sample.entities;
 
 import com.lidroid.xutils.db.annotation.Foreign;
 import com.lidroid.xutils.db.annotation.Transient;
@@ -30,7 +30,7 @@ public class Child extends EntityBase {
     private String email;
 
     //@Foreign(column = "parentId", foreign = "id")
-    //public SQLiteLazyLoader<Parent> parent;
+    //public ForeignLazyLoader<Parent> parent;
     //@Foreign(column = "parentId", foreign = "isVIP")
     //public List<Parent> parent;
     @Foreign(column = "parentId", foreign = "id")

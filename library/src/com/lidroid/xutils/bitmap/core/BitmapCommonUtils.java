@@ -19,7 +19,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Environment;
 import android.os.StatFs;
-
 import com.lidroid.xutils.util.LogUtils;
 
 import java.io.File;
@@ -33,11 +32,11 @@ public class BitmapCommonUtils {
      * @param dirName 目录名称
      * @return
      */
-    public static File getDiskCacheDir(Context context, String dirName) {
+    public static String getDiskCacheDir(Context context, String dirName) {
         final String cachePath = Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ?
-                getExternalCacheDir(context).getPath() : context.getCacheDir().getPath();
+                context.getExternalCacheDir().getPath() : context.getCacheDir().getPath();
 
-        return new File(cachePath + File.separator + dirName);
+        return cachePath + File.separator + dirName;
     }
 
 
@@ -48,19 +47,8 @@ public class BitmapCommonUtils {
      * @return
      */
     public static int getBitmapSize(Bitmap bitmap) {
+        if (bitmap == null) return 0;
         return bitmap.getRowBytes() * bitmap.getHeight();
-    }
-
-
-    /**
-     * 获取程序外部的缓存目录
-     *
-     * @param context
-     * @return
-     */
-    public static File getExternalCacheDir(Context context) {
-        final String cacheDir = "/Android/data/" + context.getPackageName() + "/cache/";
-        return new File(Environment.getExternalStorageDirectory().getPath() + cacheDir);
     }
 
     /**
@@ -79,5 +67,4 @@ public class BitmapCommonUtils {
         }
 
     }
-
 }

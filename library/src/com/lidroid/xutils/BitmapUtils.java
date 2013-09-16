@@ -34,67 +34,44 @@ import java.lang.ref.WeakReference;
 
 public class BitmapUtils {
 
-    private static boolean pauseTask = false;
-    private static final Object pauseTaskLock = new Object();
+    private boolean pauseTask = false;
+    private final Object pauseTaskLock = new Object();
 
-    private static Context context;
-    private static BitmapUtils instance;
-    private static BitmapGlobalConfig globalConfig;
-    private static BitmapDisplayConfig defaultDisplayConfig;
+    private Context context;
+    private BitmapGlobalConfig globalConfig;
+    private BitmapDisplayConfig defaultDisplayConfig;
 
     /////////////////////////////////////////////// create ///////////////////////////////////////////////////
-    private BitmapUtils(Context context, String diskCachePath) {
-        BitmapUtils.context = context;
+    public BitmapUtils(Context context) {
+        this(context, null);
+    }
+
+    public BitmapUtils(Context context, String diskCachePath) {
+        this.context = context;
         globalConfig = new BitmapGlobalConfig(context, diskCachePath);
         defaultDisplayConfig = new BitmapDisplayConfig(context);
     }
 
-    public static BitmapUtils create(Context ctx) {
-        if (instance == null) {
-            instance = new BitmapUtils(ctx.getApplicationContext(), null);
-        }
-        return instance;
+    public BitmapUtils(Context context, String diskCachePath, int memoryCacheSize) {
+        this(context, diskCachePath);
+        globalConfig.setMemoryCacheSize(memoryCacheSize);
     }
 
-    public static BitmapUtils create(Context ctx, String diskCachePath) {
-        if (instance == null) {
-            instance = new BitmapUtils(ctx.getApplicationContext(), diskCachePath);
-        }
-        return instance;
+    public BitmapUtils(Context context, String diskCachePath, int memoryCacheSize, int diskCacheSize) {
+        this(context, diskCachePath);
+        globalConfig.setMemoryCacheSize(memoryCacheSize);
+        globalConfig.setDiskCacheSize(diskCacheSize);
     }
 
-    public static BitmapUtils create(Context ctx, String diskCachePath, int memoryCacheSize) {
-        if (instance == null) {
-            instance = new BitmapUtils(ctx.getApplicationContext(), diskCachePath);
-            globalConfig.setMemoryCacheSize(memoryCacheSize);
-        }
-        return instance;
+    public BitmapUtils(Context context, String diskCachePath, float memoryCachePercent) {
+        this(context, diskCachePath);
+        globalConfig.setMemCacheSizePercent(memoryCachePercent);
     }
 
-    public static BitmapUtils create(Context ctx, String diskCachePath, int memoryCacheSize, int diskCacheSize) {
-        if (instance == null) {
-            instance = new BitmapUtils(ctx.getApplicationContext(), diskCachePath);
-            globalConfig.setMemoryCacheSize(memoryCacheSize);
-            globalConfig.setDiskCacheSize(diskCacheSize);
-        }
-        return instance;
-    }
-
-    public static BitmapUtils create(Context ctx, String diskCachePath, float memoryCachePercent) {
-        if (instance == null) {
-            instance = new BitmapUtils(ctx.getApplicationContext(), diskCachePath);
-            globalConfig.setMemCacheSizePercent(memoryCachePercent);
-        }
-        return instance;
-    }
-
-    public static BitmapUtils create(Context ctx, String diskCachePath, float memoryCachePercent, int diskCacheSize) {
-        if (instance == null) {
-            instance = new BitmapUtils(ctx.getApplicationContext(), diskCachePath);
-            globalConfig.setMemCacheSizePercent(memoryCachePercent);
-            globalConfig.setDiskCacheSize(diskCacheSize);
-        }
-        return instance;
+    public BitmapUtils(Context context, String diskCachePath, float memoryCachePercent, int diskCacheSize) {
+        this(context, diskCachePath);
+        globalConfig.setMemCacheSizePercent(memoryCachePercent);
+        globalConfig.setDiskCacheSize(diskCacheSize);
     }
 
     //////////////////////////////////////// config ////////////////////////////////////////////////////////////////////
@@ -139,8 +116,13 @@ public class BitmapUtils {
         return this;
     }
 
-    public BitmapUtils configDefaultCompressQuality(int compressQuality) {
-        defaultDisplayConfig.setCompressQuality(compressQuality);
+    public BitmapUtils configDefaultShowOriginal(boolean showOriginal) {
+        defaultDisplayConfig.setShowOriginal(showOriginal);
+        return this;
+    }
+
+    public BitmapUtils configDefaultBitmapConfig(Bitmap.Config config) {
+        defaultDisplayConfig.setBitmapConfig(config);
         return this;
     }
 
@@ -181,7 +163,7 @@ public class BitmapUtils {
     }
 
     public BitmapUtils configGlobalConfig(BitmapGlobalConfig globalConfig) {
-        BitmapUtils.globalConfig = globalConfig;
+        this.globalConfig = globalConfig;
         return this;
     }
 
@@ -192,12 +174,17 @@ public class BitmapUtils {
     }
 
     public void display(ImageView imageView, String uri, BitmapDisplayConfig displayConfig) {
-        if (imageView == null || TextUtils.isEmpty(uri)) {
+        if (imageView == null) {
             return;
         }
 
         if (displayConfig == null) {
             displayConfig = defaultDisplayConfig;
+        }
+
+        if (TextUtils.isEmpty(uri)) {
+            displayConfig.getImageLoadCallBack().loadFailed(imageView, displayConfig.getLoadFailedBitmap());
+            return;
         }
 
         Bitmap bitmap = null;
@@ -206,7 +193,6 @@ public class BitmapUtils {
 
         if (bitmap != null) {
             imageView.setImageBitmap(bitmap);
-
         } else if (!bitmapLoadTaskExist(imageView, uri)) {
 
             final BitmapLoadTask loadTask = new BitmapLoadTask(imageView, displayConfig);
@@ -297,12 +283,12 @@ public class BitmapUtils {
         return null;
     }
 
-    private static boolean bitmapLoadTaskExist(ImageView imageView, Object uriData) {
+    private static boolean bitmapLoadTaskExist(ImageView imageView, String uri) {
         final BitmapLoadTask oldLoadTask = getBitmapTaskFromImageView(imageView);
 
         if (oldLoadTask != null) {
-            final Object oldUri = oldLoadTask.uriData;
-            if (oldUri == null || !oldUri.equals(uriData)) {
+            final String oldUri = oldLoadTask.uri;
+            if (TextUtils.isEmpty(oldUri) || !oldUri.equals(uri)) {
                 oldLoadTask.cancel(true);
             } else {
                 // 同一个线程已经在执行
@@ -312,8 +298,7 @@ public class BitmapUtils {
         return false;
     }
 
-    private static class AsyncBitmapDrawable extends BitmapDrawable {
-
+    private class AsyncBitmapDrawable extends BitmapDrawable {
 
         private final WeakReference<BitmapLoadTask> bitmapLoadTaskReference;
 
@@ -327,28 +312,27 @@ public class BitmapUtils {
         }
     }
 
-    private static class BitmapLoadTask extends CompatibleAsyncTask<Object, Void, Bitmap> {
-        private Object uriData;
-        private final WeakReference<ImageView> imageViewReference;
+    private class BitmapLoadTask extends CompatibleAsyncTask<Object, Void, Bitmap> {
+        private String uri;
+        private final WeakReference<ImageView> targetImageViewReference;
         private final BitmapDisplayConfig displayConfig;
 
         public BitmapLoadTask(ImageView imageView, BitmapDisplayConfig config) {
-            imageViewReference = new WeakReference<ImageView>(imageView);
+            targetImageViewReference = new WeakReference<ImageView>(imageView);
             displayConfig = config;
         }
 
         @Override
         protected Bitmap doInBackground(Object... params) {
             if (params != null && params.length > 0) {
-                uriData = params[0];
+                uri = (String) params[0];
             } else {
                 return null;
             }
-            final String uri = String.valueOf(uriData);
             Bitmap bitmap = null;
 
             synchronized (pauseTaskLock) {
-                while (pauseTask && !isCancelled()) {
+                while (pauseTask && !this.isCancelled()) {
                     try {
                         pauseTaskLock.wait();
                     } catch (InterruptedException e) {
@@ -357,12 +341,12 @@ public class BitmapUtils {
             }
 
             // 从磁盘缓存获取图片
-            if (!isCancelled() && getAttachedImageView() != null && !pauseTask) {
+            if (!pauseTask && !this.isCancelled() && this.getTargetImageView() != null) {
                 bitmap = globalConfig.getBitmapCache().getBitmapFromDiskCache(uri, displayConfig);
             }
 
             // 下载图片
-            if (bitmap == null && !isCancelled() && getAttachedImageView() != null && !pauseTask) {
+            if (bitmap == null && !pauseTask && !this.isCancelled() && this.getTargetImageView() != null) {
                 bitmap = globalConfig.getBitmapCache().downloadBitmap(uri, displayConfig);
             }
 
@@ -376,11 +360,13 @@ public class BitmapUtils {
                 bitmap = null;
             }
 
-            final ImageView imageView = getAttachedImageView();
-            if (bitmap != null && imageView != null) {//显示图片
-                displayConfig.getImageLoadCallBack().loadCompleted(imageView, bitmap, displayConfig);
-            } else if (bitmap == null && imageView != null) {//显示获取错误图片
-                displayConfig.getImageLoadCallBack().loadFailed(imageView, displayConfig.getLoadFailedBitmap());
+            final ImageView imageView = this.getTargetImageView();
+            if (imageView != null) {
+                if (bitmap != null) {//显示图片
+                    displayConfig.getImageLoadCallBack().loadCompleted(imageView, bitmap, displayConfig);
+                } else {//显示获取错误图片
+                    displayConfig.getImageLoadCallBack().loadFailed(imageView, displayConfig.getLoadFailedBitmap());
+                }
             }
         }
 
@@ -397,8 +383,8 @@ public class BitmapUtils {
          *
          * @return
          */
-        private ImageView getAttachedImageView() {
-            final ImageView imageView = imageViewReference.get();
+        private ImageView getTargetImageView() {
+            final ImageView imageView = targetImageViewReference.get();
             final BitmapLoadTask bitmapWorkerTask = getBitmapTaskFromImageView(imageView);
 
             if (this == bitmapWorkerTask) {

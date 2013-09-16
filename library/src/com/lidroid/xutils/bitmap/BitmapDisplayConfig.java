@@ -24,17 +24,21 @@ import com.lidroid.xutils.bitmap.callback.SimpleImageLoadCallBack;
 
 public class BitmapDisplayConfig {
 
+    private static final Bitmap TRANSPARENT_BITMAP = Bitmap.createBitmap(50, 50, Bitmap.Config.ALPHA_8);
+
     private int bitmapMaxWidth = 0;
     private int bitmapMaxHeight = 0;
 
     private Animation animation;
 
-    private Bitmap loadingBitmap;
+    private Bitmap loadingBitmap = TRANSPARENT_BITMAP;
     private Bitmap loadFailedBitmap;
 
     private ImageLoadCallBack imageLoadCallBack;
 
-    private int compressQuality = 70;
+    private boolean showOriginal = false;
+
+    private Bitmap.Config bitmapConfig = Bitmap.Config.ARGB_4444;
 
     private Context mContext;
 
@@ -103,16 +107,24 @@ public class BitmapDisplayConfig {
         this.imageLoadCallBack = imageLoadCallBack;
     }
 
-    public int getCompressQuality() {
-        return compressQuality;
+    public boolean isShowOriginal() {
+        return showOriginal;
     }
 
-    public void setCompressQuality(int compressQuality) {
-        this.compressQuality = compressQuality;
+    public void setShowOriginal(boolean showOriginal) {
+        this.showOriginal = showOriginal;
+    }
+
+    public Bitmap.Config getBitmapConfig() {
+        return bitmapConfig;
+    }
+
+    public void setBitmapConfig(Bitmap.Config bitmapConfig) {
+        this.bitmapConfig = bitmapConfig;
     }
 
     @Override
     public String toString() {
-        return "-" + getBitmapMaxWidth() + "-" + getBitmapMaxHeight() + "-" + getCompressQuality();
+        return isShowOriginal() ? "" : "-" + getBitmapMaxWidth() + "-" + getBitmapMaxHeight();
     }
 }
