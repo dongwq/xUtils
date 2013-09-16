@@ -26,3 +26,5 @@ local.properties
 ant.properties
 build.xml
 META-INF
+
+/xUtils.iws
