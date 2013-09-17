@@ -27,6 +27,12 @@ import android.util.Log;
  * Date: 13-7-24
  * Time: 下午12:23
  */
+
+/**
+ *
+ * 添加Log level 控制与对象支持。
+ *
+ */
 public class LogUtils {
 
     public static String customTagPrefix = "";
@@ -34,19 +40,15 @@ public class LogUtils {
     private LogUtils() {
     }
 
+    // default level
+    public static int LEVEL = LogUtils.INFO;
+
     public static final int VERBOSE = 2;
     public static final int DEBUG = 3;
     public static final int INFO = 4;
     public static final int WARN = 5;
     public static final int ERROR = 6;
     public static final int ASSERT = 7;
-
-    public static boolean allowD = true;
-    public static boolean allowE = true;
-    public static boolean allowI = true;
-    public static boolean allowV = true;
-    public static boolean allowW = true;
-    public static boolean allowWtf = true;
 
     private static String generateTag(StackTraceElement caller) {
         String tag = "%s.%s()[%d]";
@@ -57,100 +59,112 @@ public class LogUtils {
         return tag;
     }
 
-    public static void d(String content) {
-        if (!allowD) return;
+    public static <T> void d(T msg) {
+        if (LEVEL < DEBUG ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+        String content = msg == null? "null": msg.toString();
         Log.d(tag, content);
     }
 
-    public static void d(String content, Throwable tr) {
-        if (!allowD) return;
+    public static <T> void d(T msg, Throwable tr) {
+        if (LEVEL < DEBUG ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.d(tag, content, tr);
     }
 
-    public static void e(String content) {
-        if (!allowE) return;
+    public static <T> void e(T msg) {
+        if (LEVEL < ERROR ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.e(tag, content);
     }
 
-    public static void e(String content, Throwable tr) {
-        if (!allowE) return;
+    public static <T> void e(T msg, Throwable tr) {
+        if (LEVEL < ERROR ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.e(tag, content, tr);
     }
 
-    public static void i(String content) {
-        if (!allowI) return;
+    public static <T> void i(T msg) {
+        if (LEVEL < INFO ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.i(tag, content);
     }
 
-    public static void i(String content, Throwable tr) {
-        if (!allowI) return;
+    public static <T> void i(T msg, Throwable tr) {
+        if (LEVEL < INFO ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.i(tag, content, tr);
     }
 
-    public static void v(String content) {
-        if (!allowV) return;
+    public static <T> void v(T msg) {
+        if (LEVEL < VERBOSE ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.v(tag, content);
     }
 
-    public static void v(String content, Throwable tr) {
-        if (!allowV) return;
+    public static <T> void v(T msg, Throwable tr) {
+        if (LEVEL < VERBOSE ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.v(tag, content, tr);
     }
 
-    public static void w(String content) {
-        if (!allowW) return;
+    public static <T> void w(T msg) {
+        if (LEVEL < WARN ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.w(tag, content);
     }
 
-    public static void w(String content, Throwable tr) {
-        if (!allowW) return;
+    public static <T> void w(T msg, Throwable tr) {
+        if (LEVEL < WARN ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.w(tag, content, tr);
     }
 
     public static void w(Throwable tr) {
-        if (!allowW) return;
+        if (LEVEL < WARN) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
         Log.w(tag, tr);
     }
 
 
-    public static void wtf(String content) {
-        if (!allowWtf) return;
+    public static <T> void wtf(T msg) {
+        if (LEVEL < ASSERT ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.wtf(tag, content);
     }
 
-    public static void wtf(String content, Throwable tr) {
-        if (!allowWtf) return;
+    public static <T> void wtf(T msg, Throwable tr) {
+        if (LEVEL < ASSERT ) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
+       String content = msg == null? "null": msg.toString();
         Log.wtf(tag, content, tr);
     }
 
     public static void wtf(Throwable tr) {
-        if (!allowWtf) return;
+        if (LEVEL < ASSERT) return;
         StackTraceElement caller = OtherUtils.getCallerMethodName();
         String tag = generateTag(caller);
         Log.wtf(tag, tr);
