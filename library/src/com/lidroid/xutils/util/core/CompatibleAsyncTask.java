@@ -547,7 +547,7 @@ public abstract class CompatibleAsyncTask<Params, Progress, Result> {
      *                               {@link CompatibleAsyncTask.Status#RUNNING} or {@link CompatibleAsyncTask.Status#FINISHED}.
      * @see #execute(Object[])
      */
-    public final CompatibleAsyncTask<Params, Progress, Result> executeOnExecutor(Executor exec,
+    public final CompatibleAsyncTask<Params, Progress, Result>  executeOnExecutor(Executor exec,
                                                                                  Params... params) {
         if (mStatus != Status.PENDING) {
             switch (mStatus) {
