@@ -40,7 +40,7 @@ public class LogUtils {
     }
 
     // default level info
-    public static int LEVEL = LogUtils.INFO;
+    public static int LEVEL = LogUtils.ASSERT;
 
     public static final int VERBOSE = 2;
     public static final int DEBUG = 3;
