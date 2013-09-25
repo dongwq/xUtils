@@ -39,7 +39,7 @@ public class LogUtils {
     private LogUtils() {
     }
 
-    // default level
+    // default level info
     public static int LEVEL = LogUtils.INFO;
 
     public static final int VERBOSE = 2;

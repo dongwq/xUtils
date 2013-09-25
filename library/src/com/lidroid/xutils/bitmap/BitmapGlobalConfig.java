@@ -36,6 +36,17 @@ import java.util.concurrent.ThreadFactory;
  */
 public class BitmapGlobalConfig {
 
+    @Override
+    public String toString() {
+        return "BitmapGlobalConfig{" +
+                "diskCachePath='" + diskCachePath + '\'' +
+                ", diskCacheSize=" + diskCacheSize +
+                ", diskCacheEnabled=" + diskCacheEnabled +
+                ", memoryCacheEnabled=" + memoryCacheEnabled +
+                ", memoryCacheSize=" + memoryCacheSize +
+                '}';
+    }
+
     private String diskCachePath;
     public final static int MIN_MEMORY_CACHE_SIZE = 1024 * 1024 * 2; // 2M
     private int memoryCacheSize = 1024 * 1024 * 8; // 8MB
