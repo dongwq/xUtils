@@ -60,7 +60,7 @@ public class LogUtils {
 
     public static <T> void d(T msg) {
         if (LEVEL < DEBUG) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.d(tag, content);
@@ -68,7 +68,7 @@ public class LogUtils {
 
     public static <T> void d(T msg, Throwable tr) {
         if (LEVEL < DEBUG) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.d(tag, content, tr);
@@ -76,7 +76,7 @@ public class LogUtils {
 
     public static <T> void e(T msg) {
         if (LEVEL < ERROR) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.e(tag, content);
@@ -84,7 +84,7 @@ public class LogUtils {
 
     public static <T> void e(T msg, Throwable tr) {
         if (LEVEL < ERROR) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.e(tag, content, tr);
@@ -92,7 +92,7 @@ public class LogUtils {
 
     public static <T> void i(T msg) {
         if (LEVEL < INFO) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.i(tag, content);
@@ -100,7 +100,7 @@ public class LogUtils {
 
     public static <T> void i(T msg, Throwable tr) {
         if (LEVEL < INFO) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.i(tag, content, tr);
@@ -108,7 +108,7 @@ public class LogUtils {
 
     public static <T> void v(T msg) {
         if (LEVEL < VERBOSE) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.v(tag, content);
@@ -116,7 +116,7 @@ public class LogUtils {
 
     public static <T> void v(T msg, Throwable tr) {
         if (LEVEL < VERBOSE) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.v(tag, content, tr);
@@ -124,7 +124,7 @@ public class LogUtils {
 
     public static <T> void w(T msg) {
         if (LEVEL < WARN) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.w(tag, content);
@@ -132,7 +132,7 @@ public class LogUtils {
 
     public static <T> void w(T msg, Throwable tr) {
         if (LEVEL < WARN) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.w(tag, content, tr);
@@ -140,7 +140,7 @@ public class LogUtils {
 
     public static void w(Throwable tr) {
         if (LEVEL < WARN) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         Log.w(tag, tr);
     }
@@ -148,7 +148,7 @@ public class LogUtils {
 
     public static <T> void wtf(T msg) {
         if (LEVEL < ASSERT) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.wtf(tag, content);
@@ -156,7 +156,7 @@ public class LogUtils {
 
     public static <T> void wtf(T msg, Throwable tr) {
         if (LEVEL < ASSERT) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
         Log.wtf(tag, content, tr);
@@ -164,7 +164,7 @@ public class LogUtils {
 
     public static void wtf(Throwable tr) {
         if (LEVEL < ASSERT) return;
-        StackTraceElement caller = OtherUtils.getCallerMethodName();
+        StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         Log.wtf(tag, tr);
     }
