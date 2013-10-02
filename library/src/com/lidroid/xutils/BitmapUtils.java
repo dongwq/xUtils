@@ -29,7 +29,9 @@ import com.lidroid.xutils.bitmap.BitmapGlobalConfig;
 import com.lidroid.xutils.bitmap.callback.ImageLoadCallBack;
 import com.lidroid.xutils.bitmap.download.Downloader;
 import com.lidroid.xutils.util.core.CompatibleAsyncTask;
+import com.lidroid.xutils.util.core.LruDiskCache;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 
 public class BitmapUtils {
@@ -156,6 +158,11 @@ public class BitmapUtils {
         return this;
     }
 
+    public BitmapUtils configDiskCacheFileNameGenerator(LruDiskCache.DiskCacheFileNameGenerator diskCacheFileNameGenerator) {
+        globalConfig.setDiskCacheFileNameGenerator(diskCacheFileNameGenerator);
+        return this;
+    }
+
     public BitmapUtils configGlobalConfig(BitmapGlobalConfig globalConfig) {
         this.globalConfig = globalConfig;
         return this;
@@ -240,6 +247,10 @@ public class BitmapUtils {
 
     public void closeCache() {
         globalConfig.closeCache();
+    }
+
+    public File getBitmapFileFromDiskCache(String uri) {
+        return globalConfig.getBitmapCache().getBitmapFileFromDiskCache(uri);
     }
 
     public Bitmap getBitmapFromMemCache(String uri, BitmapDisplayConfig displayConfig) {
