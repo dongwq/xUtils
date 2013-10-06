@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 public class RequestParams {
 
     private String charset = HTTP.UTF_8;
@@ -61,11 +60,12 @@ public class RequestParams {
      *
      * @param header
      */
-    public void addHeader(Header header) {
+    public RequestParams addHeader(Header header) {
         if (this.headers == null) {
             this.headers = new ArrayList<HeaderItem>();
         }
         this.headers.add(new HeaderItem(header));
+        return this;
     }
 
     /**
@@ -74,11 +74,12 @@ public class RequestParams {
      * @param name
      * @param value
      */
-    public void addHeader(String name, String value) {
+    public RequestParams addHeader(String name, String value) {
         if (this.headers == null) {
             this.headers = new ArrayList<HeaderItem>();
         }
         this.headers.add(new HeaderItem(name, value));
+        return this;
     }
 
     /**
@@ -86,13 +87,14 @@ public class RequestParams {
      *
      * @param headers
      */
-    public void addHeaders(List<Header> headers) {
+    public RequestParams addHeaders(List<Header> headers) {
         if (this.headers == null) {
             this.headers = new ArrayList<HeaderItem>();
         }
         for (Header header : headers) {
             this.headers.add(new HeaderItem(header));
         }
+        return this;
     }
 
     /**
@@ -136,81 +138,92 @@ public class RequestParams {
         }
     }
 
-    public void addQueryStringParameter(String name, String value) {
+    public RequestParams addQueryStringParameter(String name, String value) {
         if (queryStringParams == null) {
             queryStringParams = new ArrayList<NameValuePair>();
         }
         queryStringParams.add(new BasicNameValuePair(name, value));
+        return this;
     }
 
-    public void addQueryStringParameter(NameValuePair nameValuePair) {
+    public RequestParams addQueryStringParameter(NameValuePair nameValuePair) {
         if (queryStringParams == null) {
             queryStringParams = new ArrayList<NameValuePair>();
         }
         queryStringParams.add(nameValuePair);
+        return this;
     }
 
-    public void addQueryStringParameter(List<NameValuePair> nameValuePairs) {
+    public RequestParams addQueryStringParameter(List<NameValuePair> nameValuePairs) {
         if (queryStringParams == null) {
             queryStringParams = new ArrayList<NameValuePair>();
         }
         queryStringParams.addAll(nameValuePairs);
+        return this;
     }
 
-    public void addBodyParameter(String name, String value) {
+    public RequestParams addBodyParameter(String name, String value) {
         if (bodyParams == null) {
             bodyParams = new ArrayList<NameValuePair>();
         }
         bodyParams.add(new BasicNameValuePair(name, value));
+        return this;
     }
 
-    public void addBodyParameter(NameValuePair nameValuePair) {
+    public RequestParams addBodyParameter(NameValuePair nameValuePair) {
         if (bodyParams == null) {
             bodyParams = new ArrayList<NameValuePair>();
         }
         bodyParams.add(nameValuePair);
+        return this;
     }
 
-    public void addBodyParameter(List<NameValuePair> nameValuePairs) {
+    public RequestParams addBodyParameter(List<NameValuePair> nameValuePairs) {
         if (bodyParams == null) {
             bodyParams = new ArrayList<NameValuePair>();
         }
         bodyParams.addAll(nameValuePairs);
+        return this;
     }
 
-    public void addBodyParameter(String key, File file) {
+    public RequestParams addBodyParameter(String key, File file) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
         fileParams.put(key, new FileBody(file));
+        return this;
     }
 
-    public void addBodyParameter(String key, File file, String mimeType) {
+    public RequestParams addBodyParameter(String key, File file, String mimeType) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
         fileParams.put(key, new FileBody(file, mimeType));
+        return this;
     }
 
-    public void addBodyParameter(String key, File file, String mimeType, String charset) {
+    public RequestParams addBodyParameter(String key, File file, String mimeType, String charset) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
         fileParams.put(key, new FileBody(file, mimeType, charset));
+        return this;
     }
 
-    public void addBodyParameter(String key, InputStream stream, long length, String fileName) {
+    public RequestParams addBodyParameter(String key, InputStream stream, long length, String fileName) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
         fileParams.put(key, new InputStreamBody(stream, length, fileName));
+        return this;
     }
 
-    public void addBodyParameter(String key, InputStream stream, long length, String mimeType, String fileName) {
+    public RequestParams addBodyParameter(String key, InputStream stream, long length, String mimeType, String fileName) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
         fileParams.put(key, new InputStreamBody(stream, length, mimeType, fileName));
+        return this;
     }
 
     public void setBodyEntity(HttpEntity bodyEntity) {
