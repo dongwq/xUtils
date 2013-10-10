@@ -201,11 +201,7 @@ public class DbUtils {
         }
     }
 
-<<<<<<< HEAD
-    public<T> void save(List<T> entities) throws DbException {
-=======
     public void saveAll(List<?> entities) throws DbException {
->>>>>>> remotes/wyouflf/master
         try {
             beginTransaction();
 
