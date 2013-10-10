@@ -180,7 +180,7 @@ public class DbUtils {
         }
     }
 
-    public void save(Object entity) throws DbException {
+    public<T> void save(T entity) throws DbException {
         try {
             beginTransaction();
 
@@ -192,7 +192,7 @@ public class DbUtils {
         }
     }
 
-    public void save(List<Object> entities) throws DbException {
+    public<T> void save(List<T> entities) throws DbException {
         try {
             beginTransaction();
 
