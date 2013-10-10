@@ -45,7 +45,7 @@ public class DbFragment extends Fragment {
     private TextView resultText;
 
     @OnClick(R.id.db_test_btn)
-    public void download(View view) {
+    public void testDb(View view) {
 
         String temp = "";
 
@@ -99,8 +99,8 @@ public class DbFragment extends Fragment {
 
             List<Parent> list = db.findAll(
                     Selector.from(Parent.class)
-                            .where(WhereBuilder.b("id", "<", 54)
-                                    .append("time", ">", calendar.getTime()))
+                            .where("id", "<", 54)
+                            .and("time", ">", calendar.getTime())
                             .orderBy("id")
                             .limit(10));
             temp += "find parent size:" + list.size() + "\n";

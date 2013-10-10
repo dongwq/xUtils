@@ -404,7 +404,7 @@ public final class LruDiskCache implements Closeable {
     }
 
     public synchronized long getExpiryTimestamp(String key) throws IOException {
-        String diskKey = DiskCacheKeyGenerator.generate(key);
+        String diskKey = diskCacheFileNameGenerator.generate(key);
         checkNotClosed();
         validateKey(diskKey);
         Entry entry = lruEntries.get(diskKey);
@@ -415,9 +415,13 @@ public final class LruDiskCache implements Closeable {
         }
     }
 
+    public File getCacheFile(String key, int index) {
+        String diskKey = diskCacheFileNameGenerator.generate(key);
+        return new File(this.directory, diskKey + "." + index);
+    }
 
     public Snapshot get(String key) throws IOException {
-        String diskKey = DiskCacheKeyGenerator.generate(key);
+        String diskKey = diskCacheFileNameGenerator.generate(key);
         return getByDiskKey(diskKey);
     }
 
@@ -491,7 +495,7 @@ public final class LruDiskCache implements Closeable {
      * edit is in progress.
      */
     public Editor edit(String key) throws IOException {
-        String diskKey = DiskCacheKeyGenerator.generate(key);
+        String diskKey = diskCacheFileNameGenerator.generate(key);
         return editByDiskKey(diskKey, ANY_SEQUENCE_NUMBER);
     }
 
@@ -618,7 +622,7 @@ public final class LruDiskCache implements Closeable {
     }
 
     public boolean remove(String key) throws IOException {
-        String diskKey = DiskCacheKeyGenerator.generate(key);
+        String diskKey = diskCacheFileNameGenerator.generate(key);
         return removeByDiskKey(diskKey);
     }
 
@@ -1200,12 +1204,16 @@ public final class LruDiskCache implements Closeable {
         }
     }
 
-    /////////////////////////////////////// DiskCacheKeyGenerator ////////////////////////////////////////
-    private static class DiskCacheKeyGenerator {
-        private DiskCacheKeyGenerator() {
+    /////////////////////////////////////// DiskCacheFileNameGenerator ////////////////////////////////////////
+    public interface DiskCacheFileNameGenerator {
+        public String generate(String key);
+    }
+
+    public class MD5DiskCacheFileNameGenerator implements DiskCacheFileNameGenerator {
+        public MD5DiskCacheFileNameGenerator() {
         }
 
-        public static String generate(String key) {
+        public String generate(String key) {
             String cacheKey;
             try {
                 final MessageDigest mDigest = MessageDigest.getInstance("MD5");
@@ -1217,7 +1225,7 @@ public final class LruDiskCache implements Closeable {
             return cacheKey;
         }
 
-        private static String bytesToHexString(byte[] bytes) {
+        private String bytesToHexString(byte[] bytes) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < bytes.length; i++) {
                 String hex = Integer.toHexString(0xFF & bytes[i]);
@@ -1227,6 +1235,18 @@ public final class LruDiskCache implements Closeable {
                 sb.append(hex);
             }
             return sb.toString();
+        }
+    }
+
+    private DiskCacheFileNameGenerator diskCacheFileNameGenerator = new MD5DiskCacheFileNameGenerator();
+
+    public DiskCacheFileNameGenerator getDiskCacheFileNameGenerator() {
+        return diskCacheFileNameGenerator;
+    }
+
+    public void setDiskCacheFileNameGenerator(DiskCacheFileNameGenerator diskCacheFileNameGenerator) {
+        if (diskCacheFileNameGenerator != null) {
+            this.diskCacheFileNameGenerator = diskCacheFileNameGenerator;
         }
     }
 }

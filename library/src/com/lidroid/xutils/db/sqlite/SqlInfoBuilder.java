@@ -24,8 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * 构造insert，update，delete，create语句。
- * 构造select，请使用Selector。
+ * Build "insert", "replace",，"update", "delete" and "create" sql.
  */
 public class SqlInfoBuilder {
 
@@ -68,7 +67,7 @@ public class SqlInfoBuilder {
 
     public static SqlInfo buildReplaceSqlInfo(DbUtils db, Object entity) throws DbException {
 
-        List<KeyValue> keyValueList = entity2KeyValueListForReplace(db, entity);
+        List<KeyValue> keyValueList = entity2KeyValueList(db, entity);
         if (keyValueList.size() == 0) return null;
 
         SqlInfo result = new SqlInfo();
@@ -159,7 +158,7 @@ public class SqlInfoBuilder {
         Id id = table.getId();
         Object idValue = id.getColumnValue(entity);
 
-        if (null == idValue) {//主键值不能为null，否则不能更新
+        if (null == idValue) {
             throw new DbException("this entity[" + entity.getClass() + "]'s id value is null");
         }
 
@@ -213,10 +212,10 @@ public class SqlInfoBuilder {
         sqlBuffer.append(table.getTableName());
         sqlBuffer.append(" ( ");
 
-        if (id.isAutoIncreaseType()) {
+        if (id.isAutoIncrement()) {
             sqlBuffer.append("\"").append(id.getColumnName()).append("\"  ").append("INTEGER PRIMARY KEY AUTOINCREMENT,");
         } else {
-            sqlBuffer.append("\"").append(id.getColumnName()).append("\"  ").append("TEXT PRIMARY KEY,");
+            sqlBuffer.append("\"").append(id.getColumnName()).append("\"  ").append(id.getColumnDbType()).append(" PRIMARY KEY,");
         }
 
         Collection<Column> columns = table.columnMap.values();
@@ -255,7 +254,7 @@ public class SqlInfoBuilder {
         return kv;
     }
 
-    private static List<KeyValue> entity2KeyValueListForReplace(DbUtils db, Object entity) {
+    public static List<KeyValue> entity2KeyValueList(DbUtils db, Object entity) {
 
         List<KeyValue> keyValueList = new ArrayList<KeyValue>();
 
@@ -264,40 +263,8 @@ public class SqlInfoBuilder {
         Object idValue = TableUtils.getIdValue(entity);
 
         if (id != null && idValue != null) {
-            KeyValue kv = new KeyValue(table.getId().getColumnName(), idValue);
+            KeyValue kv = new KeyValue(id.getColumnName(), idValue);
             keyValueList.add(kv);
-        }
-
-        Collection<Column> columns = table.columnMap.values();
-        for (Column column : columns) {
-            if (column instanceof Finder) {
-                ((Finder) column).db = db;
-            } else if (column instanceof Foreign) {
-                ((Foreign) column).db = db;
-            }
-            KeyValue kv = column2KeyValue(entity, column);
-            if (kv != null) {
-                keyValueList.add(kv);
-            }
-        }
-
-        return keyValueList;
-    }
-
-    public static List<KeyValue> entity2KeyValueList(DbUtils db, Object entity) {
-
-        List<KeyValue> keyValueList = new ArrayList<KeyValue>();
-
-        Table table = Table.get(entity.getClass());
-        Id id = table.getId();
-
-        if (id != null) {
-            Object idValue = id.getColumnValue(entity);
-            if (idValue != null && !id.isAutoIncreaseType()) {
-                //用了非自增长,添加id
-                KeyValue kv = new KeyValue(table.getId().getColumnName(), idValue);
-                keyValueList.add(kv);
-            }
         }
 
         Collection<Column> columns = table.columnMap.values();

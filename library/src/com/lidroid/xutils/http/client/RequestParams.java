@@ -16,13 +16,13 @@
 package com.lidroid.xutils.http.client;
 
 import com.lidroid.xutils.http.client.entity.BodyParamsEntity;
+import com.lidroid.xutils.http.client.multipart.HttpMultipartMode;
 import com.lidroid.xutils.http.client.multipart.MultipartEntity;
 import com.lidroid.xutils.http.client.multipart.content.ContentBody;
 import com.lidroid.xutils.http.client.multipart.content.FileBody;
 import com.lidroid.xutils.http.client.multipart.content.InputStreamBody;
 import com.lidroid.xutils.http.client.multipart.content.StringBody;
 import com.lidroid.xutils.util.LogUtils;
-
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
@@ -38,12 +38,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-
 public class RequestParams {
 
     private String charset = HTTP.UTF_8;
 
-    private List<Header> headers;
+    private List<HeaderItem> headers;
     private List<NameValuePair> queryStringParams;
     private HttpEntity bodyEntity;
     private List<NameValuePair> bodyParams;
@@ -56,102 +55,175 @@ public class RequestParams {
         this.charset = charset;
     }
 
-    public void addHeader(Header header) {
+    /**
+     * Adds a header to this message. The header will be appended to the end of the list.
+     *
+     * @param header
+     */
+    public RequestParams addHeader(Header header) {
         if (this.headers == null) {
-            this.headers = new ArrayList<Header>();
+            this.headers = new ArrayList<HeaderItem>();
         }
-        this.headers.add(header);
+        this.headers.add(new HeaderItem(header));
+        return this;
     }
 
-    public void addHeader(String name, String value) {
+    /**
+     * Adds a header to this message. The header will be appended to the end of the list.
+     *
+     * @param name
+     * @param value
+     */
+    public RequestParams addHeader(String name, String value) {
         if (this.headers == null) {
-            this.headers = new ArrayList<Header>();
+            this.headers = new ArrayList<HeaderItem>();
         }
-        this.headers.add(new BasicHeader(name, value));
+        this.headers.add(new HeaderItem(name, value));
+        return this;
     }
 
-    public void addHeaders(List<Header> headers) {
+    /**
+     * Adds all the headers to this message.
+     *
+     * @param headers
+     */
+    public RequestParams addHeaders(List<Header> headers) {
         if (this.headers == null) {
-            this.headers = new ArrayList<Header>();
+            this.headers = new ArrayList<HeaderItem>();
         }
-        this.headers.addAll(headers);
+        for (Header header : headers) {
+            this.headers.add(new HeaderItem(header));
+        }
+        return this;
     }
 
-    public void addQueryStringParameter(String name, String value) {
+    /**
+     * Overwrites the first header with the same name.
+     * The new header will be appended to the end of the list, if no header with the given name can be found.
+     *
+     * @param header
+     */
+    public void setHeader(Header header) {
+        if (this.headers == null) {
+            this.headers = new ArrayList<HeaderItem>();
+        }
+        this.headers.add(new HeaderItem(header, true));
+    }
+
+    /**
+     * Overwrites the first header with the same name.
+     * The new header will be appended to the end of the list, if no header with the given name can be found.
+     *
+     * @param name
+     * @param value
+     */
+    public void setHeader(String name, String value) {
+        if (this.headers == null) {
+            this.headers = new ArrayList<HeaderItem>();
+        }
+        this.headers.add(new HeaderItem(name, value, true));
+    }
+
+    /**
+     * Overwrites all the headers in the message.
+     *
+     * @param headers
+     */
+    public void setHeaders(List<Header> headers) {
+        if (this.headers == null) {
+            this.headers = new ArrayList<HeaderItem>();
+        }
+        for (Header header : headers) {
+            this.headers.add(new HeaderItem(header, true));
+        }
+    }
+
+    public RequestParams addQueryStringParameter(String name, String value) {
         if (queryStringParams == null) {
             queryStringParams = new ArrayList<NameValuePair>();
         }
         queryStringParams.add(new BasicNameValuePair(name, value));
+        return this;
     }
 
-    public void addQueryStringParameter(NameValuePair nameValuePair) {
+    public RequestParams addQueryStringParameter(NameValuePair nameValuePair) {
         if (queryStringParams == null) {
             queryStringParams = new ArrayList<NameValuePair>();
         }
         queryStringParams.add(nameValuePair);
+        return this;
     }
 
-    public void addQueryStringParameter(List<NameValuePair> nameValuePairs) {
+    public RequestParams addQueryStringParameter(List<NameValuePair> nameValuePairs) {
         if (queryStringParams == null) {
             queryStringParams = new ArrayList<NameValuePair>();
         }
         queryStringParams.addAll(nameValuePairs);
+        return this;
     }
 
-    public void addBodyParameter(String name, String value) {
+    public RequestParams addBodyParameter(String name, String value) {
         if (bodyParams == null) {
             bodyParams = new ArrayList<NameValuePair>();
         }
         bodyParams.add(new BasicNameValuePair(name, value));
+        return this;
     }
 
-    public void addBodyParameter(NameValuePair nameValuePair) {
+    public RequestParams addBodyParameter(NameValuePair nameValuePair) {
         if (bodyParams == null) {
             bodyParams = new ArrayList<NameValuePair>();
         }
         bodyParams.add(nameValuePair);
+        return this;
     }
 
-    public void addBodyParameter(List<NameValuePair> nameValuePairs) {
+    public RequestParams addBodyParameter(List<NameValuePair> nameValuePairs) {
         if (bodyParams == null) {
             bodyParams = new ArrayList<NameValuePair>();
         }
         bodyParams.addAll(nameValuePairs);
+        return this;
     }
 
-    public void addBodyParameter(String key, File file) {
+    public RequestParams addBodyParameter(String key, File file) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
         fileParams.put(key, new FileBody(file));
+        return this;
     }
 
-    public void addBodyParameter(String key, File file, String mimeType) {
+    public RequestParams addBodyParameter(String key, File file, String mimeType) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
         fileParams.put(key, new FileBody(file, mimeType));
+        return this;
     }
 
-    public void addBodyParameter(String key, File file, String mimeType, String charset) {
+    public RequestParams addBodyParameter(String key, File file, String mimeType, String charset) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
         fileParams.put(key, new FileBody(file, mimeType, charset));
+        return this;
     }
 
-    public void addBodyParameter(String key, InputStream stream, long length, String fileName) {
+    public RequestParams addBodyParameter(String key, InputStream stream, long length, String fileName) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
         fileParams.put(key, new InputStreamBody(stream, length, fileName));
+        return this;
     }
 
-    public void addBodyParameter(String key, InputStream stream, long length, String mimeType, String fileName) {
+    public RequestParams addBodyParameter(String key, InputStream stream, long length, String mimeType, String fileName) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
         fileParams.put(key, new InputStreamBody(stream, length, mimeType, fileName));
+        return this;
     }
 
     public void setBodyEntity(HttpEntity bodyEntity) {
@@ -179,7 +251,7 @@ public class RequestParams {
 
         if (fileParams != null && !fileParams.isEmpty()) {
 
-            MultipartEntity multipartEntity = new MultipartEntity();
+            MultipartEntity multipartEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 
             if (bodyParams != null) {
                 for (NameValuePair param : bodyParams) {
@@ -207,7 +279,32 @@ public class RequestParams {
         return this.queryStringParams;
     }
 
-    public List<Header> getHeaders() {
+    public List<HeaderItem> getHeaders() {
         return headers;
+    }
+
+    public class HeaderItem {
+        public final boolean overwrite;
+        public final Header header;
+
+        public HeaderItem(Header header) {
+            this.overwrite = false;
+            this.header = header;
+        }
+
+        public HeaderItem(Header header, boolean overwrite) {
+            this.overwrite = overwrite;
+            this.header = header;
+        }
+
+        public HeaderItem(String name, String value) {
+            this.overwrite = false;
+            this.header = new BasicHeader(name, value);
+        }
+
+        public HeaderItem(String name, String value, boolean overwrite) {
+            this.overwrite = overwrite;
+            this.header = new BasicHeader(name, value);
+        }
     }
 }

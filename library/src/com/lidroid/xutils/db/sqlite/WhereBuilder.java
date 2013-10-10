@@ -16,7 +16,6 @@
 package com.lidroid.xutils.db.sqlite;
 
 import android.text.TextUtils;
-
 import com.lidroid.xutils.db.table.ColumnUtils;
 
 import java.util.ArrayList;
@@ -101,18 +100,31 @@ public class WhereBuilder {
         if (!TextUtils.isEmpty(conj)) {
             sqlSb.append(" " + conj + " ");
         }
-        sqlSb.append(columnName).append(" " + op + " ");
-        value = ColumnUtils.convert2DbColumnValueIfNeeded(value);
+        if ("!=".equals(op)) {
+            op = "<>";
+        } else if ("==".equals(op)) {
+            op = "=";
+        }
         if (value == null) {
-            sqlSb.append("NULL");
-        } else if ("TEXT".equals(ColumnUtils.fieldType2DbType(value.getClass()))) {
-            String valueStr = value.toString();
-            if (valueStr.indexOf('\'') != -1) { // 单引号转义
-                valueStr = valueStr.replace("'", "''");
+            if ("=".equals(op)) {
+                sqlSb.append(columnName).append(" IS NULL");
+            } else if ("<>".equals(op)) {
+                sqlSb.append(columnName).append(" IS NOT NULL");
+            } else {
+                sqlSb.append(columnName).append(" " + op + " NULL");
             }
-            sqlSb.append("'" + valueStr + "'");
         } else {
-            sqlSb.append(value);
+            sqlSb.append(columnName).append(" " + op + " ");
+            value = ColumnUtils.convert2DbColumnValueIfNeeded(value);
+            if ("TEXT".equals(ColumnUtils.fieldType2DbType(value.getClass()))) {
+                String valueStr = value.toString();
+                if (valueStr.indexOf('\'') != -1) { // convert single quotations
+                    valueStr = valueStr.replace("'", "''");
+                }
+                sqlSb.append("'" + valueStr + "'");
+            } else {
+                sqlSb.append(value);
+            }
         }
         whereItems.add(sqlSb.toString());
     }

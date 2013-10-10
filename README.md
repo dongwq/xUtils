@@ -1,9 +1,7 @@
 ## xUtils简介
 * xUtils 包含了很多实用的android工具。
 * xUtils 源于Afinal框架，对Afinal进行了大量重构，使得xUtils支持大文件上传，更全面的http请求协议支持，拥有更加灵活的ORM，更多的事件注解支持且不受混淆影响...
-
-### 注意: jar包导入后运行时报NoClassDefFoundError的看下面连接的内容
-* <http://my.oschina.net/u/1171837/blog/161301>
+* xUitls最低兼容android 2.2 (api level 8)
 
 ## 目前xUtils主要有四大模块：
 
@@ -63,13 +61,14 @@ db.save(user); // 使用saveBindingId保存实体时会为实体的id赋值
 Parent entity = db.findById(Parent.class, parent.getId());
 Parent entity = db.findFirst(entity);//通过entity的属性查找
 List<Parent> list = db.findAll(entity);//通过entity的属性查找
-Parent Parent = db.findFirst(Selector.from(Parent.class).where(WhereBuilder.b("name","=","test")));
+Parent Parent = db.findFirst(Selector.from(Parent.class).where("name","=","test"));
 List<Parent> list = db.findAll(Selector.from(Parent.class)
-                                   .where(WhereBuilder.b("id","<",54)
-                                       .append("age",">",30)
-                                       .appendOR("age","<",20))
+                                   .where("id","<",54)
+                                   .and("age",">",30)
+                                   .or("age","<",20)
                                    .orderBy("id")
-                                   .limit(10));
+                                   .limit(10)
+                                   .offset(0));
 DbModel dbModel = db.findDbModelAll(Selector.from(Parent.class).select("name"));//select("name")只取出name列
 List<DbModel> dbModels = db.findDbModelAll(Selector.from(Parent.class).groupBy("name").select("name", "count(name)"));
 ...
@@ -148,7 +147,7 @@ params.addBodyParameter("name", "value");
 // 加入文件参数后默认使用MultipartEntity（"multipart/form-data"），
 // 如需"multipart/related"，xUtils中提供的MultipartEntity支持设置subType为"related"。
 // 使用params.setBodyEntity(httpEntity)可设置更多类型的HttpEntity（如：
-// MultipartEntity,BodyParamsEntity,UploadFileEntity,UploadInputStreamEntity,StringEntity）。
+// MultipartEntity,BodyParamsEntity,FileUploadEntity,InputStreamUploadEntity,StringEntity）。
 params.addBodyParameter("file", new File("path"));
 ...
 
@@ -246,8 +245,5 @@ LogUtils.d("wyouflf");
 # 关于作者
 * Email： <wyouflf@qq.com>, <wyouflf@gmail.com>
 * 有任何建议都可以给我发邮件, 你也可以加入这个QQ群：330445659, 技术交流，idea分享 *_*
-
-# 关于Afinal
-* <https://github.com/yangfuhai/afinal>
 
 

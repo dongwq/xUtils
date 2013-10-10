@@ -50,11 +50,11 @@ public class DbUtils {
 
     private DbUtils(DaoConfig config) throws DbException {
         if (config == null) {
-            throw new RuntimeException("daoConfig is null");
+            throw new IllegalArgumentException("daoConfig may not be null");
         }
 
         if (config.getContext() == null) {
-            throw new RuntimeException("android context is null");
+            throw new IllegalArgumentException("context mey not be null");
         }
 
         String sdCardPath = config.getSdCardPath();
@@ -102,6 +102,15 @@ public class DbUtils {
 
     public static DbUtils create(Context context, String dbName, int dbVersion, DbUpgradeListener dbUpgradeListener) throws DbException {
         DaoConfig config = new DaoConfig(context);
+        config.setDbName(dbName);
+        config.setDbVersion(dbVersion);
+        config.setDbUpgradeListener(dbUpgradeListener);
+        return getInstance(config);
+    }
+
+    public static DbUtils create(Context context, String sdCardPath, String dbName, int dbVersion, DbUpgradeListener dbUpgradeListener) throws DbException {
+        DaoConfig config = new DaoConfig(context);
+        config.setSdCardPath(sdCardPath);
         config.setDbName(dbName);
         config.setDbVersion(dbVersion);
         config.setDbUpgradeListener(dbUpgradeListener);
@@ -338,7 +347,7 @@ public class DbUtils {
         if (!tableIsExist(entityType)) return null;
 
         Id id = Table.get(entityType).getId();
-        Selector selector = Selector.from(entityType).where(WhereBuilder.b(id.getColumnName(), "=", idValue));
+        Selector selector = Selector.from(entityType).where(id.getColumnName(), "=", idValue);
 
         String sql = selector.limit(1).toString();
         long seq = CursorUtils.FindCacheSequence.getSeq();

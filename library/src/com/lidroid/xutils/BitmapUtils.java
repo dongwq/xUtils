@@ -29,7 +29,9 @@ import com.lidroid.xutils.bitmap.BitmapGlobalConfig;
 import com.lidroid.xutils.bitmap.callback.ImageLoadCallBack;
 import com.lidroid.xutils.bitmap.download.Downloader;
 import com.lidroid.xutils.util.core.CompatibleAsyncTask;
+import com.lidroid.xutils.util.core.LruDiskCache;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 
 public class BitmapUtils {
@@ -136,12 +138,6 @@ public class BitmapUtils {
         return this;
     }
 
-    /**
-     * 设置默认的缓存过期时间。如果http请求返回了过期时间，使用请求返回的时间。
-     *
-     * @param defaultExpiry
-     * @return
-     */
     public BitmapUtils configDefaultCacheExpiry(long defaultExpiry) {
         globalConfig.setDefaultCacheExpiry(defaultExpiry);
         return this;
@@ -159,6 +155,11 @@ public class BitmapUtils {
 
     public BitmapUtils configDiskCacheEnabled(boolean enabled) {
         globalConfig.setDiskCacheEnabled(enabled);
+        return this;
+    }
+
+    public BitmapUtils configDiskCacheFileNameGenerator(LruDiskCache.DiskCacheFileNameGenerator diskCacheFileNameGenerator) {
+        globalConfig.setDiskCacheFileNameGenerator(diskCacheFileNameGenerator);
         return this;
     }
 
@@ -248,6 +249,10 @@ public class BitmapUtils {
         globalConfig.closeCache();
     }
 
+    public File getBitmapFileFromDiskCache(String uri) {
+        return globalConfig.getBitmapCache().getBitmapFileFromDiskCache(uri);
+    }
+
     public Bitmap getBitmapFromMemCache(String uri, BitmapDisplayConfig displayConfig) {
         return globalConfig.getBitmapCache().getBitmapFromMemCache(uri, displayConfig);
     }
@@ -256,6 +261,9 @@ public class BitmapUtils {
 
     public void resumeTasks() {
         pauseTask = false;
+        synchronized (pauseTaskLock) {
+            pauseTaskLock.notifyAll();
+        }
     }
 
     public void pauseTasks() {
@@ -291,7 +299,6 @@ public class BitmapUtils {
             if (TextUtils.isEmpty(oldUri) || !oldUri.equals(uri)) {
                 oldLoadTask.cancel(true);
             } else {
-                // 同一个线程已经在执行
                 return true;
             }
         }
@@ -340,31 +347,26 @@ public class BitmapUtils {
                 }
             }
 
-            // 从磁盘缓存获取图片
-            if (!pauseTask && !this.isCancelled() && this.getTargetImageView() != null) {
+            // get cache from disk cache
+            if (!this.isCancelled() && this.getTargetImageView() != null) {
                 bitmap = globalConfig.getBitmapCache().getBitmapFromDiskCache(uri, displayConfig);
             }
 
-            // 下载图片
-            if (bitmap == null && !pauseTask && !this.isCancelled() && this.getTargetImageView() != null) {
+            // download image
+            if (bitmap == null && !this.isCancelled() && this.getTargetImageView() != null) {
                 bitmap = globalConfig.getBitmapCache().downloadBitmap(uri, displayConfig);
             }
 
             return bitmap;
         }
 
-        // 获取图片任务完成
         @Override
         protected void onPostExecute(Bitmap bitmap) {
-            if (isCancelled() || pauseTask) {
-                bitmap = null;
-            }
-
             final ImageView imageView = this.getTargetImageView();
             if (imageView != null) {
-                if (bitmap != null) {//显示图片
+                if (bitmap != null) {
                     displayConfig.getImageLoadCallBack().loadCompleted(imageView, bitmap, displayConfig);
-                } else {//显示获取错误图片
+                } else {
                     displayConfig.getImageLoadCallBack().loadFailed(imageView, displayConfig.getLoadFailedBitmap());
                 }
             }
@@ -378,11 +380,6 @@ public class BitmapUtils {
             }
         }
 
-        /**
-         * 获取线程匹配的imageView,防止出现闪动的现象
-         *
-         * @return
-         */
         private ImageView getTargetImageView() {
             final ImageView imageView = targetImageViewReference.get();
             final BitmapLoadTask bitmapWorkerTask = getBitmapTaskFromImageView(imageView);
