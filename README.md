@@ -84,6 +84,8 @@ List<DbModel> dbModels = db.findDbModelAll(Selector.from(Parent.class).groupBy("
 TextView textView;
 
 // 取消了之前使用方法名绑定事件的方式，使用id绑定不受混淆影响
+// 支持绑定多个id @OnClick({R.id.id1, R.id.id2, R.id.id3})
+// 更多事件支持参见ViewCommonEventListener类和包com.lidroid.xutils.view.annotation.event。
 @OnClick(R.id.test_button)
 public void testButtonClick(View v) {
     ...
@@ -223,8 +225,9 @@ handler.stop();
 ## BitmapUtils 使用方法
 
 ```java
-BitmapUtils.create(this).display(testImageView, "http://bbs.lidroid.com/static/image/common/logo.png");
-//BitmapUtils.create(this).display(testImageView, "/sdcard/test.jpg"); //支持加载本地图片
+BitmapUtils bitmapUtils = new BitmapUtils(this);
+bitmapUtils.display(testImageView, "http://bbs.lidroid.com/static/image/common/logo.png");
+//bitmapUtils.display(testImageView, "/sdcard/test.jpg"); //支持加载本地图片
 
 // 使用ListView等容器展示图片时可通过PauseOnScrollListener控制滑动和快速滑动过程中时候暂停加载图片
 listView.setOnScrollListener(new PauseOnScrollListener(bitmapUtils, false, true));
@@ -236,8 +239,9 @@ listView.setOnScrollListener(new PauseOnScrollListener(bitmapUtils, false, true)
 ### 输出日志 LogUtils
 
 ```java
-// 自动添加TAG，格式： className[methodName, lineNumber]
-// 可设置全局的allowD，allowE...，控制是否输出log。
+// 自动添加TAG，格式： className.methodName(L:lineNumber)
+// 可设置全局的LogUtils.allowD = false，LogUtils.allowI = false...，控制是否输出log。
+// 自定义log输出LogUtils.customLogger = new xxxLogger();
 LogUtils.d("wyouflf");
 ```
 

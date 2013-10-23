@@ -45,10 +45,10 @@ public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> 
     private final StringDownloadHandler mStringDownloadHandler = new StringDownloadHandler();
     private final FileDownloadHandler mFileDownloadHandler = new FileDownloadHandler();
 
-    private DownloadRedirectHandler downloadRedirectHandler;
+    private HttpRedirectHandler httpRedirectHandler;
 
-    public void setDownloadRedirectHandler(DownloadRedirectHandler downloadRedirectHandler) {
-        this.downloadRedirectHandler = downloadRedirectHandler;
+    public void setHttpRedirectHandler(HttpRedirectHandler httpRedirectHandler) {
+        this.httpRedirectHandler = httpRedirectHandler;
     }
 
     private HttpRequestBase request;
@@ -119,11 +119,13 @@ public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> 
                 retry = retryHandler.retryRequest(exception, ++retriedTimes, context);
             } catch (NullPointerException e) {
                 exception = new IOException(e.getMessage());
+                exception.initCause(e);
                 retry = retryHandler.retryRequest(exception, ++retriedTimes, context);
             } catch (HttpException e) {
                 throw e;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 exception = new IOException(e.getMessage());
+                exception.initCause(e);
                 retry = retryHandler.retryRequest(exception, ++retriedTimes, context);
             } finally {
                 if (!retry && exception != null) {
@@ -219,10 +221,10 @@ public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> 
             }
             return responseBody;
         } else if (statusCode == 301 || statusCode == 302) {
-            if (downloadRedirectHandler == null) {
-                downloadRedirectHandler = new DefaultDownloadRedirectHandler();
+            if (httpRedirectHandler == null) {
+                httpRedirectHandler = new DefaultHttpRedirectHandler();
             }
-            HttpRequestBase request = downloadRedirectHandler.getDirectRequest(response);
+            HttpRequestBase request = httpRedirectHandler.getDirectRequest(response);
             if (request != null) {
                 return this.sendRequest(request);
             }
@@ -242,9 +244,6 @@ public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> 
     @Override
     public void stop() {
         this.mStop = true;
-        if (request != null && !request.isAborted()) {
-            request.abort();
-        }
         if (!this.isCancelled()) {
             this.cancel(true);
         }

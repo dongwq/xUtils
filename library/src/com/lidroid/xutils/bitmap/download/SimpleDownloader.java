@@ -17,6 +17,7 @@ package com.lidroid.xutils.bitmap.download;
 
 import com.lidroid.xutils.util.IOUtils;
 import com.lidroid.xutils.util.LogUtils;
+import com.lidroid.xutils.util.OtherUtils;
 
 import javax.net.ssl.*;
 import java.io.BufferedInputStream;
@@ -40,6 +41,8 @@ public class SimpleDownloader implements Downloader {
     public long downloadToStream(String uri, OutputStream outputStream) {
         URLConnection urlConnection = null;
         BufferedInputStream bis = null;
+
+        OtherUtils.trustAllSSLForHttpsURLConnection();
 
         long result = -1;
         try {

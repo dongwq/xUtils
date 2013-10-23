@@ -64,6 +64,11 @@ public class Selector {
         return this;
     }
 
+    public Selector expr(String expr) {
+        this.whereBuilder.appendExpression(expr);
+        return this;
+    }
+
     public DbModelSelector groupBy(String columnName) {
         return new DbModelSelector(this, columnName);
     }
@@ -104,7 +109,7 @@ public class Selector {
         result.append("SELECT ");
         result.append("*");
         result.append(" FROM ").append(tableName);
-        if (whereBuilder != null) {
+        if (whereBuilder != null && whereBuilder.getWhereItemSize() > 0) {
             result.append(" WHERE ").append(whereBuilder.toString());
         }
         if (orderByList != null) {

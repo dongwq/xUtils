@@ -15,11 +15,20 @@
 
 package com.lidroid.xutils.util;
 
+import android.text.TextUtils;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.protocol.HTTP;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.security.cert.X509Certificate;
 
 /**
  * Created by wyouflf on 13-8-30.
@@ -58,7 +67,41 @@ public class OtherUtils {
                 }
             }
         }
-        return result;
+
+        boolean isSupportedCharset = false;
+        if (!TextUtils.isEmpty(result)) {
+            try {
+                isSupportedCharset = Charset.isSupported(result);
+            } catch (Exception e) {
+            }
+        }
+
+        return isSupportedCharset ? result : null;
+    }
+
+    private static final int STRING_BUFFER_LENGTH = 100;
+
+    public static long sizeOfString(String str, String charset) throws UnsupportedEncodingException {
+        if (TextUtils.isEmpty(str)) {
+            return 0;
+        }
+        int len = str.length();
+        if (len < STRING_BUFFER_LENGTH) {
+            return str.getBytes(charset).length;
+        }
+        long size = 0;
+        for (int i = 0; i < len; i += STRING_BUFFER_LENGTH) {
+            int end = i + STRING_BUFFER_LENGTH;
+            end = end < len ? end : len;
+            String temp = getSubString(str, i, end);
+            size += temp.getBytes(charset).length;
+        }
+        return size;
+    }
+
+    // get the sub string for large string
+    public static String getSubString(String str, int start, int end) {
+        return new String(str.substring(start, end));
     }
 
     public static StackTraceElement getCurrentStackTraceElement() {
@@ -67,5 +110,34 @@ public class OtherUtils {
 
     public static StackTraceElement getCallerStackTraceElement() {
         return Thread.currentThread().getStackTrace()[4];
+    }
+
+    private static TrustManager[] trustAllCerts;
+
+    public static void trustAllSSLForHttpsURLConnection() {
+        // Create a trust manager that does not validate certificate chains
+        if (trustAllCerts == null) {
+            trustAllCerts = new TrustManager[]{new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }};
+        }
+        // Install the all-trusting trust manager
+        final SSLContext sslContext;
+        try {
+            sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, null);
+            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+        } catch (Exception e) {
+            LogUtils.e(e.getMessage(), e);
+        }
+        HttpsURLConnection.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
     }
 }

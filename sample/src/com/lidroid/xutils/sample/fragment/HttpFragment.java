@@ -93,17 +93,19 @@ public class HttpFragment extends Fragment {
 
     /////////////////////////////////////// other ////////////////////////////////////////////////////////////////
 
-    private void testUpload() {
+    //@OnClick(R.id.download_btn)
+    public void testUpload(View view) {
         RequestParams params = new RequestParams();
-        params.addQueryStringParameter("method", "upload");
-        params.addQueryStringParameter("path", "/apps/测试应用/test.zip");
-        // 请在百度的开放access_tokenapi测试页面找到自己的access_token
-        params.addQueryStringParameter("access_token", "3.1042851f652496c9362b1cd77d4f849b.2592000.1377530363.3590808424-248414");
+        //params.addQueryStringParameter("method", "upload");
+        //params.addQueryStringParameter("path", "/apps/测试应用/test.zip");
+        // 请在百度的开放api测试页面找到自己的access_token
+        //params.addQueryStringParameter("access_token",
+        //        "3.9b885b6c56b8798ab69b3ba39238e4fc.2592000.1384929178.3590808424-248414");
         params.addBodyParameter("file", new File("/sdcard/test.zip"));
 
         HttpUtils http = new HttpUtils();
         http.send(HttpRequest.HttpMethod.POST,
-                "https://pcs.baidu.com/rest/2.0/pcs/file",
+                "http://192.168.1.6:8080/UploadServlet",
                 params,
                 new RequestCallBack<String>() {
 
@@ -130,17 +132,12 @@ public class HttpFragment extends Fragment {
                 });
     }
 
-    private void testGet() {
-        RequestParams params = new RequestParams();
-        params.addQueryStringParameter("method", "info");
-        params.addQueryStringParameter("access_token",
-                "3.1042851f652496c9362b1cd77d4f849b.2592000.1377530363.3590808424-248414");
-
+    //@OnClick(R.id.download_btn)
+    public void testGet(View view) {
         HttpUtils http = new HttpUtils();
-        http.configCurrRequestExpiry(1000 * 10);
+        http.configCurrentHttpGetCacheExpiry(1000 * 10);
         http.send(HttpRequest.HttpMethod.GET,
-                "https://pcs.baidu.com/rest/2.0/pcs/quota",
-                params,
+                "http://www.baidu.com",
                 new RequestCallBack<String>() {
 
                     @Override
@@ -166,7 +163,7 @@ public class HttpFragment extends Fragment {
                 });
     }
 
-    private void testPost() {
+    public void testPost(View view) {
         RequestParams params = new RequestParams();
         params.addQueryStringParameter("method", "mkdir");
         params.addQueryStringParameter("access_token", "3.1042851f652496c9362b1cd77d4f849b.2592000.1377530363.3590808424-248414");
@@ -207,7 +204,7 @@ public class HttpFragment extends Fragment {
         params.addQueryStringParameter("wd", "lidroid");
 
         HttpUtils http = new HttpUtils();
-        http.configCurrRequestExpiry(1000 * 10);
+        http.configCurrentHttpGetCacheExpiry(1000 * 10);
         try {
             ResponseStream responseStream = http.sendSync(HttpRequest.HttpMethod.GET, "http://www.baidu.com/s", params);
             return responseStream.readString();
