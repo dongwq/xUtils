@@ -63,13 +63,28 @@ public class DbModelSelector {
         return this;
     }
 
+    public DbModelSelector and(WhereBuilder where) {
+        selector.and(where);
+        return this;
+    }
+
     public DbModelSelector or(String columnName, String op, Object value) {
         selector.or(columnName, op, value);
         return this;
     }
 
+    public DbModelSelector or(WhereBuilder where) {
+        selector.or(where);
+        return this;
+    }
+
     public DbModelSelector expr(String expr) {
         selector.expr(expr);
+        return this;
+    }
+
+    public DbModelSelector expr(String columnName, String op, Object value) {
+        selector.expr(columnName, op, value);
         return this;
     }
 

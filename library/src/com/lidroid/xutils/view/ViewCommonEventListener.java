@@ -58,15 +58,15 @@ public class ViewCommonEventListener implements
     private Method tabChangedMethod;
     private Method scrollChangedMethod;
 
-    // onScrollStateChanged
-    private Method scrollStateChanged;
-    private Method scroll;
+    // OnScrollListener
+    private Method scrollStateChangedMethod;
+    private Method scrollMethod;
 
-    // ItemSelected
+    // OnItemSelectedListener
     private Method itemSelectMethod;
     private Method nothingSelectedMethod;
 
-    // SeekBarChange
+    // OnSeekBarChangeListener
     private Method progressChangedMethod;
     private Method startTrackingTouchMethod;
     private Method stopTrackingTouchMethod;
@@ -122,12 +122,12 @@ public class ViewCommonEventListener implements
     }
 
     public ViewCommonEventListener scrollStateChanged(Method method) {
-        this.scrollStateChanged = method;
+        this.scrollStateChangedMethod = method;
         return this;
     }
 
     public ViewCommonEventListener scroll(Method method) {
-        this.scroll = method;
+        this.scrollMethod = method;
         return this;
     }
 
@@ -161,7 +161,7 @@ public class ViewCommonEventListener implements
     public void onClick(View v) {
         try {
             clickMethod.invoke(handler, v);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -171,7 +171,7 @@ public class ViewCommonEventListener implements
         try {
             Object result = longClickMethod.invoke(handler, v);
             return result == null ? false : Boolean.valueOf(result.toString());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
         return false;
@@ -181,7 +181,7 @@ public class ViewCommonEventListener implements
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         try {
             itemClickMethod.invoke(handler, parent, view, position, id);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -191,7 +191,7 @@ public class ViewCommonEventListener implements
         try {
             Object result = itemLongClickMethod.invoke(handler, parent, view, position, id);
             return result == null ? false : Boolean.valueOf(result.toString());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
         return false;
@@ -201,7 +201,7 @@ public class ViewCommonEventListener implements
     public void onCheckedChanged(RadioGroup group, int checkedId) {
         try {
             radioGroupCheckedChangedMethod.invoke(handler, group, checkedId);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -210,7 +210,7 @@ public class ViewCommonEventListener implements
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         try {
             compoundButtonCheckedChangedMethod.invoke(handler, buttonView, isChecked);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -220,7 +220,7 @@ public class ViewCommonEventListener implements
         try {
             Object result = preferenceChangeMethod.invoke(handler, preference, newValue);
             return result == null ? false : Boolean.valueOf(result.toString());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
         return false;
@@ -230,7 +230,7 @@ public class ViewCommonEventListener implements
     public void onTabChanged(String tabId) {
         try {
             tabChangedMethod.invoke(handler, tabId);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -239,7 +239,7 @@ public class ViewCommonEventListener implements
     public void onScrollChanged() {
         try {
             scrollChangedMethod.invoke(handler);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -247,8 +247,8 @@ public class ViewCommonEventListener implements
     @Override
     public void onScrollStateChanged(AbsListView absListView, int i) {
         try {
-            scrollStateChanged.invoke(handler, absListView, i);
-        } catch (Exception e) {
+            scrollStateChangedMethod.invoke(handler, absListView, i);
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -256,8 +256,8 @@ public class ViewCommonEventListener implements
     @Override
     public void onScroll(AbsListView absListView, int i, int i2, int i3) {
         try {
-            scroll.invoke(handler, absListView, i, i2, i3);
-        } catch (Exception e) {
+            scrollMethod.invoke(handler, absListView, i, i2, i3);
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -266,7 +266,7 @@ public class ViewCommonEventListener implements
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         try {
             itemSelectMethod.invoke(handler, parent, view, position, id);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -275,7 +275,7 @@ public class ViewCommonEventListener implements
     public void onNothingSelected(AdapterView<?> parent) {
         try {
             nothingSelectedMethod.invoke(handler, parent);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -284,7 +284,7 @@ public class ViewCommonEventListener implements
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         try {
             progressChangedMethod.invoke(handler, seekBar, progress, fromUser);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -293,7 +293,7 @@ public class ViewCommonEventListener implements
     public void onStartTrackingTouch(SeekBar seekBar) {
         try {
             startTrackingTouchMethod.invoke(handler, seekBar);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -302,7 +302,7 @@ public class ViewCommonEventListener implements
     public void onStopTrackingTouch(SeekBar seekBar) {
         try {
             stopTrackingTouchMethod.invoke(handler, seekBar);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
     }
@@ -316,18 +316,23 @@ public class ViewCommonEventListener implements
                     Method method = annotation_method_map.get(annotation);
                     if (annotation.annotationType().equals(OnClick.class)) {
                         View view = finder.findViewById((Integer) value);
+                        if (view == null) break;
                         view.setOnClickListener(new ViewCommonEventListener(handler).click(method));
                     } else if (annotation.annotationType().equals(OnLongClick.class)) {
                         View view = finder.findViewById((Integer) value);
+                        if (view == null) break;
                         view.setOnLongClickListener(new ViewCommonEventListener(handler).longClick(method));
                     } else if (annotation.annotationType().equals(OnItemClick.class)) {
                         View view = finder.findViewById((Integer) value);
+                        if (view == null) break;
                         ((AdapterView<?>) view).setOnItemClickListener(new ViewCommonEventListener(handler).itemClick(method));
                     } else if (annotation.annotationType().equals(OnItemLongClick.class)) {
                         View view = finder.findViewById((Integer) value);
+                        if (view == null) break;
                         ((AdapterView<?>) view).setOnItemLongClickListener(new ViewCommonEventListener(handler).itemLongClick(method));
                     } else if (annotation.annotationType().equals(OnCheckedChange.class)) {
                         View view = finder.findViewById((Integer) value);
+                        if (view == null) break;
                         if (view instanceof RadioGroup) {
                             ((RadioGroup) view).setOnCheckedChangeListener(new ViewCommonEventListener(handler).radioGroupCheckedChanged(method));
                         } else if (view instanceof CompoundButton) {
@@ -335,15 +340,19 @@ public class ViewCommonEventListener implements
                         }
                     } else if (annotation.annotationType().equals(OnPreferenceChange.class)) {
                         Preference preference = finder.findPreference(value.toString());
+                        if (preference == null) break;
                         preference.setOnPreferenceChangeListener(new ViewCommonEventListener(handler).preferenceChange(method));
                     } else if (annotation.annotationType().equals(OnTabChange.class)) {
                         View view = finder.findViewById((Integer) value);
+                        if (view == null) break;
                         ((TabHost) view).setOnTabChangedListener(new ViewCommonEventListener(handler).tabChanged(method));
                     } else if (annotation.annotationType().equals(OnScrollChanged.class)) {
                         View view = finder.findViewById((Integer) value);
+                        if (view == null) break;
                         view.getViewTreeObserver().addOnScrollChangedListener(new ViewCommonEventListener(handler).scrollChanged(method));
                     } else if (annotation.annotationType().equals(OnScrollStateChanged.class)) {
                         View view = finder.findViewById((Integer) value);
+                        if (view == null) break;
                         ViewCommonEventListener listener = new ViewCommonEventListener(handler);
                         ConcurrentHashMap<Annotation, Method> a_m_map = value_annotation_method_map.get(value);
                         for (Annotation a : a_m_map.keySet()) {
@@ -356,6 +365,7 @@ public class ViewCommonEventListener implements
                         ((AbsListView) view).setOnScrollListener(listener);
                     } else if (annotation.annotationType().equals(OnItemSelected.class)) {
                         View view = finder.findViewById((Integer) value);
+                        if (view == null) break;
                         ViewCommonEventListener listener = new ViewCommonEventListener(handler);
                         ConcurrentHashMap<Annotation, Method> a_m_map = value_annotation_method_map.get(value);
                         for (Annotation a : a_m_map.keySet()) {
@@ -368,6 +378,7 @@ public class ViewCommonEventListener implements
                         ((AdapterView<?>) view).setOnItemSelectedListener(listener);
                     } else if (annotation.annotationType().equals(OnProgressChanged.class)) {
                         View view = finder.findViewById((Integer) value);
+                        if (view == null) break;
                         ViewCommonEventListener listener = new ViewCommonEventListener(handler);
                         ConcurrentHashMap<Annotation, Method> a_m_map = value_annotation_method_map.get(value);
                         for (Annotation a : a_m_map.keySet()) {
@@ -381,7 +392,7 @@ public class ViewCommonEventListener implements
                         }
                         ((SeekBar) view).setOnSeekBarChangeListener(listener);
                     }
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     LogUtils.e(e.getMessage(), e);
                 }
             }

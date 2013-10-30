@@ -93,7 +93,7 @@ public class SimpleDownloader implements Downloader {
                 outputStream.write(buffer, 0, len);
             }
             outputStream.flush();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             result = -1;
             LogUtils.e(e.getMessage(), e);
         } finally {

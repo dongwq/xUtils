@@ -16,7 +16,6 @@
 package com.lidroid.xutils.http.client.callback;
 
 import com.lidroid.xutils.util.IOUtils;
-
 import com.lidroid.xutils.util.OtherUtils;
 import org.apache.http.HttpEntity;
 

@@ -17,16 +17,10 @@ package com.lidroid.xutils.http.client;
 
 import com.lidroid.xutils.HttpUtils;
 import com.lidroid.xutils.util.IOUtils;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HTTP;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.Locale;
 
 /**
@@ -49,6 +43,10 @@ public class ResponseStream extends InputStream {
     }
 
     public ResponseStream(HttpResponse baseResponse, String charset, String url, long expiry) throws IOException {
+        if (baseResponse == null) {
+            throw new IllegalArgumentException("baseResponse may not be null");
+        }
+
         this.baseResponse = baseResponse;
         this.baseStream = baseResponse.getEntity().getContent();
         this.charset = charset;
@@ -59,6 +57,10 @@ public class ResponseStream extends InputStream {
     private String _directResult;
 
     public ResponseStream(String result) throws IOException {
+        if (result == null) {
+            throw new IllegalArgumentException("result may not be null");
+        }
+
         _directResult = result;
     }
 
@@ -100,8 +102,6 @@ public class ResponseStream extends InputStream {
                 HttpUtils.sHttpGetCache.put(url, _directResult, expiry);
             }
             return _directResult;
-        } catch (IOException e) {
-            throw e;
         } finally {
             IOUtils.closeQuietly(baseStream);
         }
@@ -120,8 +120,6 @@ public class ResponseStream extends InputStream {
                 out.write(buffer, 0, len);
             }
             out.flush();
-        } catch (IOException e) {
-            throw e;
         } finally {
             IOUtils.closeQuietly(out);
             IOUtils.closeQuietly(baseStream);

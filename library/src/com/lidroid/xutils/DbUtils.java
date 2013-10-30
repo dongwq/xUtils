@@ -269,6 +269,20 @@ public class DbUtils {
         }
     }
 
+    public void deleteAll(Class<?> entityType) throws DbException {
+        if (!tableIsExist(entityType)) return;
+        try {
+            beginTransaction();
+
+            SqlInfo sql = SqlInfoBuilder.buildDeleteSqlInfo(entityType, null);
+            execNonQuery(sql);
+
+            setTransactionSuccessful();
+        } finally {
+            endTransaction();
+        }
+    }
+
     public void deleteById(Class<?> entityType, Object idValue) throws DbException {
         if (!tableIsExist(entityType)) return;
         try {
@@ -296,12 +310,17 @@ public class DbUtils {
         }
     }
 
-    public void update(Object entity) throws DbException {
+    /**
+     * @param entity
+     * @param updateColumnNames if null, update all columns.
+     * @throws DbException
+     */
+    public void update(Object entity, String... updateColumnNames) throws DbException {
         if (!tableIsExist(entity.getClass())) return;
         try {
             beginTransaction();
 
-            updateWithoutTransaction(entity);
+            updateWithoutTransaction(entity, updateColumnNames);
 
             setTransactionSuccessful();
         } finally {
@@ -309,13 +328,18 @@ public class DbUtils {
         }
     }
 
-    public void updateAll(List<?> entities) throws DbException {
+    /**
+     * @param entities
+     * @param updateColumnNames if null, update all columns.
+     * @throws DbException
+     */
+    public void updateAll(List<?> entities, String... updateColumnNames) throws DbException {
         if (entities == null || entities.size() < 1 || !tableIsExist(entities.get(0).getClass())) return;
         try {
             beginTransaction();
 
             for (Object entity : entities) {
-                updateWithoutTransaction(entity);
+                updateWithoutTransaction(entity, updateColumnNames);
             }
 
             setTransactionSuccessful();
@@ -324,12 +348,18 @@ public class DbUtils {
         }
     }
 
-    public void update(Object entity, WhereBuilder whereBuilder) throws DbException {
+    /**
+     * @param entity
+     * @param whereBuilder
+     * @param updateColumnNames if null, update all columns.
+     * @throws DbException
+     */
+    public void update(Object entity, WhereBuilder whereBuilder, String... updateColumnNames) throws DbException {
         if (!tableIsExist(entity.getClass())) return;
         try {
             beginTransaction();
 
-            execNonQuery(SqlInfoBuilder.buildUpdateSqlInfo(this, entity, whereBuilder));
+            execNonQuery(SqlInfoBuilder.buildUpdateSqlInfo(this, entity, whereBuilder, updateColumnNames));
 
             setTransactionSuccessful();
         } finally {
@@ -397,7 +427,10 @@ public class DbUtils {
         if (entityKvList != null) {
             WhereBuilder wb = WhereBuilder.b();
             for (KeyValue keyValue : entityKvList) {
-                wb.append(keyValue.getKey(), "=", keyValue.getValue());
+                Object value = keyValue.getValue();
+                if (value != null) {
+                    wb.and(keyValue.getKey(), "=", value);
+                }
             }
             selector.where(wb);
         }
@@ -444,7 +477,10 @@ public class DbUtils {
         if (entityKvList != null) {
             WhereBuilder wb = WhereBuilder.b();
             for (KeyValue keyValue : entityKvList) {
-                wb.append(keyValue.getKey(), "=", keyValue.getValue());
+                Object value = keyValue.getValue();
+                if (value != null) {
+                    wb.and(keyValue.getKey(), "=", value);
+                }
             }
             selector.where(wb);
         }
@@ -608,10 +644,15 @@ public class DbUtils {
 
     //***************************** private operations with out transaction *****************************
     private void saveOrUpdateWithoutTransaction(Object entity) throws DbException {
-        if (TableUtils.getIdValue(entity) != null) {
-            updateWithoutTransaction(entity);
+        Id id = TableUtils.getId(entity.getClass());
+        if (id.isAutoIncrement()) {
+            if (TableUtils.getIdValue(entity) != null) {
+                updateWithoutTransaction(entity);
+            } else {
+                saveBindingIdWithoutTransaction(entity);
+            }
         } else {
-            saveBindingIdWithoutTransaction(entity);
+            replaceWithoutTransaction(entity);
         }
     }
 
@@ -627,16 +668,22 @@ public class DbUtils {
 
     private boolean saveBindingIdWithoutTransaction(Object entity) throws DbException {
         createTableIfNotExist(entity.getClass());
-        List<KeyValue> entityKvList = SqlInfoBuilder.entity2KeyValueList(this, entity);
-        if (entityKvList != null && entityKvList.size() > 0) {
-            Table table = Table.get(entity.getClass());
-            ContentValues cv = new ContentValues();
-            DbUtils.fillContentValues(cv, entityKvList);
-            Long id = database.insert(table.getTableName(), null, cv);
-            if (id == -1) {
-                return false;
+        Table table = Table.get(entity.getClass());
+        Id idColumn = table.getId();
+        if (idColumn.isAutoIncrement()) {
+            List<KeyValue> entityKvList = SqlInfoBuilder.entity2KeyValueList(this, entity);
+            if (entityKvList != null && entityKvList.size() > 0) {
+                ContentValues cv = new ContentValues();
+                DbUtils.fillContentValues(cv, entityKvList);
+                Long id = database.insert(table.getTableName(), null, cv);
+                if (id == -1) {
+                    return false;
+                }
+                idColumn.setValue2Entity(entity, id.toString());
+                return true;
             }
-            table.getId().setValue2Entity(entity, id.toString());
+        } else {
+            execNonQuery(SqlInfoBuilder.buildInsertSqlInfo(this, entity));
             return true;
         }
         return false;
@@ -646,8 +693,8 @@ public class DbUtils {
         execNonQuery(SqlInfoBuilder.buildDeleteSqlInfo(entity));
     }
 
-    private void updateWithoutTransaction(Object entity) throws DbException {
-        execNonQuery(SqlInfoBuilder.buildUpdateSqlInfo(this, entity));
+    private void updateWithoutTransaction(Object entity, String... updateColumnNames) throws DbException {
+        execNonQuery(SqlInfoBuilder.buildUpdateSqlInfo(this, entity, updateColumnNames));
     }
 
     //************************************************ tools ***********************************
@@ -699,8 +746,10 @@ public class DbUtils {
             if (cursor != null) {
                 while (cursor.moveToNext()) {
                     try {
-                        execNonQuery("DROP TABLE " + cursor.getString(0));
-                    } catch (Exception e) {
+                        String tableName = cursor.getString(0);
+                        execNonQuery("DROP TABLE " + tableName);
+                        Table.remove(tableName);
+                    } catch (Throwable e) {
                         LogUtils.e(e.getMessage(), e);
                     }
                 }
@@ -714,6 +763,7 @@ public class DbUtils {
         if (!tableIsExist(entityType)) return;
         Table table = Table.get(entityType);
         execNonQuery("DROP TABLE " + table.getTableName());
+        Table.remove(entityType);
     }
 
     ///////////////////////////////////// exec sql /////////////////////////////////////////////////////
@@ -750,7 +800,7 @@ public class DbUtils {
             } else {
                 database.execSQL(sqlInfo.getSql());
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new DbException(e);
         }
     }
@@ -759,7 +809,7 @@ public class DbUtils {
         debugSql(sql);
         try {
             database.execSQL(sql);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new DbException(e);
         }
     }
@@ -768,7 +818,7 @@ public class DbUtils {
         debugSql(sqlInfo.getSql());
         try {
             return database.rawQuery(sqlInfo.getSql(), sqlInfo.getBindArgsAsStrArray());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new DbException(e);
         }
     }
@@ -777,7 +827,7 @@ public class DbUtils {
         debugSql(sql);
         try {
             return database.rawQuery(sql, null);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             throw new DbException(e);
         }
     }

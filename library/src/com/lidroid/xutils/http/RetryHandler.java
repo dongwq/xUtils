@@ -90,7 +90,7 @@ public class RetryHandler implements HttpRequestRetryHandler {
                     retry = false;
                     LogUtils.e("retry error, curr request is null");
                 }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 retry = false;
                 LogUtils.e("retry error", e);
             }
@@ -98,8 +98,6 @@ public class RetryHandler implements HttpRequestRetryHandler {
 
         if (retry) {
             SystemClock.sleep(RETRY_SLEEP_INTERVAL); // sleep a while and retry http request again.
-        } else {
-            LogUtils.e(exception.getMessage(), exception);
         }
 
         return retry;

@@ -199,6 +199,11 @@ public class HttpUtils {
         return this;
     }
 
+    public HttpUtils configRegisterScheme(Scheme scheme) {
+        this.httpClient.getConnectionManager().getSchemeRegistry().register(scheme);
+        return this;
+    }
+
     public HttpUtils configSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
         Scheme scheme = new Scheme("https", sslSocketFactory, 443);
         this.httpClient.getConnectionManager().getSchemeRegistry().register(scheme);
@@ -232,6 +237,8 @@ public class HttpUtils {
 
     public <T> HttpHandler<T> send(HttpRequest.HttpMethod method, String url, RequestParams params, String contentType,
                                    RequestCallBack<T> callBack) {
+        if (url == null) throw new IllegalArgumentException("url may not be null");
+
         HttpRequest request = new HttpRequest(method, url);
         return sendRequest(request, params, contentType, callBack);
     }
@@ -245,6 +252,8 @@ public class HttpUtils {
     }
 
     public ResponseStream sendSync(HttpRequest.HttpMethod method, String url, RequestParams params, String contentType) throws HttpException {
+        if (url == null) throw new IllegalArgumentException("url may not be null");
+
         HttpRequest request = new HttpRequest(method, url);
         return sendSyncRequest(request, params, contentType);
     }
@@ -253,33 +262,66 @@ public class HttpUtils {
 
     public HttpHandler<File> download(String url, String target,
                                       RequestCallBack<File> callback) {
-        return download(url, target, null, false, false, callback);
+        return download(HttpRequest.HttpMethod.GET, url, target, null, false, false, callback);
     }
 
     public HttpHandler<File> download(String url, String target,
                                       boolean autoResume, RequestCallBack<File> callback) {
-        return download(url, target, null, autoResume, false, callback);
+        return download(HttpRequest.HttpMethod.GET, url, target, null, autoResume, false, callback);
     }
 
     public HttpHandler<File> download(String url, String target,
                                       boolean autoResume, boolean autoRename, RequestCallBack<File> callback) {
-        return download(url, target, null, autoResume, autoRename, callback);
+        return download(HttpRequest.HttpMethod.GET, url, target, null, autoResume, autoRename, callback);
     }
 
     public HttpHandler<File> download(String url, String target,
                                       RequestParams params, RequestCallBack<File> callback) {
-        return download(url, target, params, false, false, callback);
+        return download(HttpRequest.HttpMethod.GET, url, target, params, false, false, callback);
     }
 
     public HttpHandler<File> download(String url, String target,
                                       RequestParams params, boolean autoResume, RequestCallBack<File> callback) {
-        return download(url, target, params, autoResume, false, callback);
+        return download(HttpRequest.HttpMethod.GET, url, target, params, autoResume, false, callback);
     }
 
     public HttpHandler<File> download(String url, String target,
                                       RequestParams params, boolean autoResume, boolean autoRename, RequestCallBack<File> callback) {
+        return download(HttpRequest.HttpMethod.GET, url, target, params, autoResume, autoRename, callback);
+    }
 
-        HttpRequest request = new HttpRequest(HttpRequest.HttpMethod.GET, url);
+    public HttpHandler<File> download(HttpRequest.HttpMethod method, String url, String target,
+                                      RequestCallBack<File> callback) {
+        return download(method, url, target, null, false, false, callback);
+    }
+
+    public HttpHandler<File> download(HttpRequest.HttpMethod method, String url, String target,
+                                      boolean autoResume, RequestCallBack<File> callback) {
+        return download(method, url, target, null, autoResume, false, callback);
+    }
+
+    public HttpHandler<File> download(HttpRequest.HttpMethod method, String url, String target,
+                                      boolean autoResume, boolean autoRename, RequestCallBack<File> callback) {
+        return download(method, url, target, null, autoResume, autoRename, callback);
+    }
+
+    public HttpHandler<File> download(HttpRequest.HttpMethod method, String url, String target,
+                                      RequestParams params, RequestCallBack<File> callback) {
+        return download(method, url, target, params, false, false, callback);
+    }
+
+    public HttpHandler<File> download(HttpRequest.HttpMethod method, String url, String target,
+                                      RequestParams params, boolean autoResume, RequestCallBack<File> callback) {
+        return download(method, url, target, params, autoResume, false, callback);
+    }
+
+    public HttpHandler<File> download(HttpRequest.HttpMethod method, String url, String target,
+                                      RequestParams params, boolean autoResume, boolean autoRename, RequestCallBack<File> callback) {
+
+        if (url == null) throw new IllegalArgumentException("url may not be null");
+        if (target == null) throw new IllegalArgumentException("target may not be null");
+
+        HttpRequest request = new HttpRequest(method, url);
 
         HttpHandler<File> handler = new HttpHandler<File>(httpClient, httpContext, defaultResponseTextCharset, callback);
 

@@ -20,6 +20,15 @@ import com.lidroid.xutils.exception.HttpException;
 
 public abstract class RequestCallBack<T> {
 
+    protected Object userTag;
+
+    public RequestCallBack() {
+    }
+
+    public RequestCallBack(Object userTag) {
+        this.userTag = userTag;
+    }
+
     private int rate = 1000 * 1;
 
     public int getRate() {
@@ -29,11 +38,10 @@ public abstract class RequestCallBack<T> {
     public void onStart() {
     }
 
-    public void onLoading(long total, long current) {
+    public void onLoading(long total, long current, boolean isUploading) {
     }
 
-    public abstract void onSuccess(T result);
+    public abstract void onSuccess(ResponseInfo<T> responseInfo);
 
-    public void onFailure(HttpException error, String msg) {
-    }
+    public abstract void onFailure(HttpException error, String msg);
 }

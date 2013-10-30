@@ -48,6 +48,10 @@ public class BitmapUtils {
     }
 
     public BitmapUtils(Context context, String diskCachePath) {
+        if (context == null) {
+            throw new IllegalArgumentException("context may not be null");
+        }
+
         this.context = context;
         globalConfig = new BitmapGlobalConfig(context, diskCachePath);
         defaultDisplayConfig = new BitmapDisplayConfig(context);
@@ -77,8 +81,8 @@ public class BitmapUtils {
 
     //////////////////////////////////////// config ////////////////////////////////////////////////////////////////////
 
-    public BitmapUtils configDefaultLoadingImage(Drawable bitmap) {
-        defaultDisplayConfig.setLoadingDrawable(bitmap);
+    public BitmapUtils configDefaultLoadingImage(Drawable drawable) {
+        defaultDisplayConfig.setLoadingDrawable(drawable);
         return this;
     }
 
@@ -87,13 +91,23 @@ public class BitmapUtils {
         return this;
     }
 
-    public BitmapUtils configDefaultLoadFailedImage(Drawable bitmap) {
-        defaultDisplayConfig.setLoadFailedDrawable(bitmap);
+    public BitmapUtils configDefaultLoadingImage(Bitmap bitmap) {
+        defaultDisplayConfig.setLoadingDrawable(new BitmapDrawable(context.getResources(), bitmap));
+        return this;
+    }
+
+    public BitmapUtils configDefaultLoadFailedImage(Drawable drawable) {
+        defaultDisplayConfig.setLoadFailedDrawable(drawable);
         return this;
     }
 
     public BitmapUtils configDefaultLoadFailedImage(int resId) {
         defaultDisplayConfig.setLoadFailedDrawable(context.getResources().getDrawable(resId));
+        return this;
+    }
+
+    public BitmapUtils configDefaultLoadFailedImage(Bitmap bitmap) {
+        defaultDisplayConfig.setLoadFailedDrawable(new BitmapDrawable(context.getResources(), bitmap));
         return this;
     }
 
@@ -188,7 +202,7 @@ public class BitmapUtils {
         }
 
         if (TextUtils.isEmpty(uri)) {
-            displayConfig.getImageLoadCallBack().loadFailed(imageView, displayConfig.getLoadFailedDrawable());
+            displayConfig.getImageLoadCallBack().loadFailed(uri, imageView, displayConfig.getLoadFailedDrawable());
             return;
         }
 
@@ -493,7 +507,7 @@ public class BitmapUtils {
                 while (pauseTask && !this.isCancelled()) {
                     try {
                         pauseTaskLock.wait();
-                    } catch (InterruptedException e) {
+                    } catch (Throwable e) {
                     }
                 }
             }
@@ -516,9 +530,16 @@ public class BitmapUtils {
             final ImageView imageView = this.getTargetImageView();
             if (imageView != null) {
                 if (bitmap != null) {
-                    displayConfig.getImageLoadCallBack().loadCompleted(imageView, new BitmapDrawable(bitmap), displayConfig);
+                    displayConfig.getImageLoadCallBack().loadCompleted(
+                            this.uri,
+                            imageView,
+                            new BitmapDrawable(context.getResources(), bitmap),
+                            displayConfig);
                 } else {
-                    displayConfig.getImageLoadCallBack().loadFailed(imageView, displayConfig.getLoadFailedDrawable());
+                    displayConfig.getImageLoadCallBack().loadFailed(
+                            this.uri,
+                            imageView,
+                            displayConfig.getLoadFailedDrawable());
                 }
             }
         }

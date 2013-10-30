@@ -88,9 +88,12 @@ public class ViewUtils {
                 ViewInject viewInject = field.getAnnotation(ViewInject.class);
                 if (viewInject != null) {
                     try {
-                        field.setAccessible(true);
-                        field.set(handler, finder.findViewById(viewInject.value()));
-                    } catch (Exception e) {
+                        View view = finder.findViewById(viewInject.value());
+                        if (view != null) {
+                            field.setAccessible(true);
+                            field.set(handler, view);
+                        }
+                    } catch (Throwable e) {
                         LogUtils.e(e.getMessage(), e);
                     }
                 }
@@ -121,7 +124,7 @@ public class ViewUtils {
                                     } else {
                                         value_annotation_method_map.put(value, annotation, method);
                                     }
-                                } catch (Exception e) {
+                                } catch (Throwable e) {
                                     LogUtils.e(e.getMessage(), e);
                                 }
                             } else {

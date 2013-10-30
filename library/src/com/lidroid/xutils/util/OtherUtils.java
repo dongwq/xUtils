@@ -37,6 +37,20 @@ public class OtherUtils {
     private OtherUtils() {
     }
 
+    public static boolean isSupportRange(HttpResponse response) {
+        if (response == null) return false;
+        Header header = response.getFirstHeader("Accept-Ranges");
+        if (header != null) {
+            return "bytes".equals(header.getValue());
+        }
+        header = response.getFirstHeader("Content-Range");
+        if (header != null) {
+            String value = header.getValue();
+            return value != null && value.startsWith("bytes");
+        }
+        return false;
+    }
+
     public static String getFileNameFromHttpResponse(HttpResponse response) {
         if (response == null) return null;
         String result = null;
@@ -46,7 +60,8 @@ public class OtherUtils {
                 NameValuePair fileNamePair = element.getParameterByName("filename");
                 if (fileNamePair != null) {
                     result = fileNamePair.getValue();
-                    result = CharsetUtils.toCharset(result, HTTP.UTF_8, result.length());//尝试转换乱码
+                    // try to get correct encoding str
+                    result = CharsetUtils.toCharset(result, HTTP.UTF_8, result.length());
                     break;
                 }
             }
@@ -72,7 +87,7 @@ public class OtherUtils {
         if (!TextUtils.isEmpty(result)) {
             try {
                 isSupportedCharset = Charset.isSupported(result);
-            } catch (Exception e) {
+            } catch (Throwable e) {
             }
         }
 
@@ -135,7 +150,7 @@ public class OtherUtils {
             sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, trustAllCerts, null);
             HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LogUtils.e(e.getMessage(), e);
         }
         HttpsURLConnection.setDefaultHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);

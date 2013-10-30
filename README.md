@@ -62,13 +62,15 @@ Parent entity = db.findById(Parent.class, parent.getId());
 Parent entity = db.findFirst(entity);//通过entity的属性查找
 List<Parent> list = db.findAll(entity);//通过entity的属性查找
 Parent Parent = db.findFirst(Selector.from(Parent.class).where("name","=","test"));
+
+// WHERE id<54 AND (age>20 OR age<30) ORDER BY id LIMIT pageSize OFFSET pageOffset
 List<Parent> list = db.findAll(Selector.from(Parent.class)
-                                   .where("id","<",54)
-                                   .and("age",">",30)
-                                   .or("age","<",20)
+                                   .where("id" ,"<", 54)
+                                   .and(WhereBuilder.b("age", ">", 20).or("age", " < ", 30))
                                    .orderBy("id")
-                                   .limit(10)
-                                   .offset(0));
+                                   .limit(pageSize)
+                                   .offset(pageSize * pageIndex));
+
 DbModel dbModel = db.findDbModelAll(Selector.from(Parent.class).select("name"));//select("name")只取出name列
 List<DbModel> dbModels = db.findDbModelAll(Selector.from(Parent.class).groupBy("name").select("name", "count(name)"));
 ...
@@ -115,13 +117,13 @@ http.send(HttpRequest.HttpMethod.GET,
     "http://www.lidroid.com",
     new RequestCallBack<String>(){
         @Override
-        public void onLoading(long total, long current) {
+        public void onLoading(long total, long current, boolean isUploading) {
             testTextView.setText(current + "/" + total);
         }
 
         @Override
-        public void onSuccess(String result) {
-            textView.setText(result);
+        public void onSuccess(ResponseInfo<String> responseInfo) {
+            textView.setText(responseInfo.result);
         }
 
         @Override
@@ -150,6 +152,7 @@ params.addBodyParameter("name", "value");
 // 如需"multipart/related"，xUtils中提供的MultipartEntity支持设置subType为"related"。
 // 使用params.setBodyEntity(httpEntity)可设置更多类型的HttpEntity（如：
 // MultipartEntity,BodyParamsEntity,FileUploadEntity,InputStreamUploadEntity,StringEntity）。
+// 例：params.setBodyEntity(new StringEntity(json,charset));
 params.addBodyParameter("file", new File("path"));
 ...
 
@@ -165,13 +168,17 @@ http.send(HttpRequest.HttpMethod.POST,
         }
 
         @Override
-        public void onLoading(long total, long current) {
-            testTextView.setText(current + "/" + total);
+        public void onLoading(long total, long current, boolean isUploading) {
+            if (isUploading) {
+                testTextView.setText("upload: " + current + "/" + total);
+            } else {
+                testTextView.setText("reply: " + current + "/" + total);
+            }
         }
 
         @Override
-        public void onSuccess(String result) {
-            testTextView.setText("upload response:" + result.getPath());
+        public void onSuccess(ResponseInfo<String> responseInfo) {
+            testTextView.setText("reply: " + responseInfo.result);
         }
 
         @Override
@@ -189,7 +196,7 @@ http.send(HttpRequest.HttpMethod.POST,
 HttpUtils http = new HttpUtils();
 HttpHandler handler = http.download("http://apache.dataguru.cn/httpcomponents/httpclient/source/httpcomponents-client-4.2.5-src.zip",
     "/sdcard/httpcomponents-client-4.2.5-src.zip",
-    true, // 如果目标文件存在，接着未完成的部分继续下载。
+    true, // 如果目标文件存在，接着未完成的部分继续下载。服务器不支持RANGE时将从新下载。
     true, // 如果从请求返回信息中获取到文件名，下载完成后自动重命名。
     new RequestCallBack<File>() {
 
@@ -199,13 +206,13 @@ HttpHandler handler = http.download("http://apache.dataguru.cn/httpcomponents/ht
         }
 
         @Override
-        public void onLoading(long total, long current) {
+        public void onLoading(long total, long current, boolean isUploading) {
             testTextView.setText(current + "/" + total);
         }
 
         @Override
-        public void onSuccess(File result) {
-            testTextView.setText("downloaded:" + result.getPath());
+        public void onSuccess(ResponseInfo<File> responseInfo) {
+            testTextView.setText("downloaded:" + responseInfo.result.getPath());
         }
 
 

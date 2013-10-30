@@ -37,7 +37,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 
 
-public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> implements RequestCallBackHandler {
+public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Void> implements RequestCallBackHandler {
 
     private final AbstractHttpClient client;
     private final HttpContext context;
@@ -48,10 +48,13 @@ public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> 
     private HttpRedirectHandler httpRedirectHandler;
 
     public void setHttpRedirectHandler(HttpRedirectHandler httpRedirectHandler) {
-        this.httpRedirectHandler = httpRedirectHandler;
+        if (httpRedirectHandler != null) {
+            this.httpRedirectHandler = httpRedirectHandler;
+        }
     }
 
     private HttpRequestBase request;
+    private boolean isUploading = true;
     private final RequestCallBack<T> callback;
 
     private int retriedTimes = 0;
@@ -76,7 +79,8 @@ public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> 
     }
 
     // 执行请求
-    private Object sendRequest(HttpRequestBase request) throws HttpException {
+    @SuppressWarnings("unchecked")
+    private ResponseInfo<T> sendRequest(HttpRequestBase request) throws HttpException {
         if (autoResume && isDownloadingFile) {
             File downloadFile = new File(fileSavePath);
             long fileLen = 0;
@@ -101,16 +105,16 @@ public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> 
                 if (_getRequestUrl != null) {
                     String result = HttpUtils.sHttpGetCache.get(_getRequestUrl);
                     if (result != null) {
-                        return result;
+                        return new ResponseInfo<T>(null, (T) result, true);
                     }
                 }
 
-                Object responseBody = null;
+                ResponseInfo<T> responseInfo = null;
                 if (!isCancelled()) {
                     HttpResponse response = client.execute(request, context);
-                    responseBody = handleResponse(response);
+                    responseInfo = handleResponse(response);
                 }
-                return responseBody;
+                return responseInfo;
             } catch (UnknownHostException e) {
                 exception = e;
                 retry = retryHandler.retryRequest(exception, ++retriedTimes, context);
@@ -127,30 +131,35 @@ public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> 
                 exception = new IOException(e.getMessage());
                 exception.initCause(e);
                 retry = retryHandler.retryRequest(exception, ++retriedTimes, context);
-            } finally {
-                if (!retry && exception != null) {
-                    throw new HttpException(exception);
-                }
+            }
+            if (!retry && exception != null) {
+                throw new HttpException(exception);
             }
         }
         return null;
     }
 
     @Override
-    protected Object doInBackground(Object... params) {
-        if (params != null && params.length > 3) {
+    protected Void doInBackground(Object... params) {
+        if (params == null || params.length < 1) return null;
+
+        if (params.length > 3) {
             fileSavePath = String.valueOf(params[1]);
             isDownloadingFile = fileSavePath != null;
             autoResume = (Boolean) params[2];
             autoRename = (Boolean) params[3];
         }
+
         try {
-            publishProgress(UPDATE_START);
+            this.publishProgress(UPDATE_START);
             request = (HttpRequestBase) params[0];
-            Object responseBody = sendRequest(request);
-            publishProgress(UPDATE_SUCCESS, responseBody);
+            ResponseInfo<T> responseInfo = sendRequest(request);
+            if (responseInfo != null) {
+                this.publishProgress(UPDATE_SUCCESS, responseInfo);
+                return null;
+            }
         } catch (HttpException e) {
-            publishProgress(UPDATE_FAILURE, e, e.getMessage());
+            this.publishProgress(UPDATE_FAILURE, e, e.getMessage());
         }
 
         return null;
@@ -161,65 +170,72 @@ public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> 
     private final static int UPDATE_FAILURE = 3;
     private final static int UPDATE_SUCCESS = 4;
 
-    @SuppressWarnings("unchecked")
     @Override
+    @SuppressWarnings("unchecked")
     protected void onProgressUpdate(Object... values) {
-        int update = Integer.valueOf(String.valueOf(values[0]));
-        switch (update) {
+        if (mStopped || values == null || values.length < 1) return;
+        switch ((Integer) values[0]) {
             case UPDATE_START:
                 if (callback != null) {
                     callback.onStart();
                 }
                 break;
             case UPDATE_LOADING:
+                if (values.length != 3) return;
                 if (callback != null) {
                     callback.onLoading(
                             Long.valueOf(String.valueOf(values[1])),
-                            Long.valueOf(String.valueOf(values[2])));
+                            Long.valueOf(String.valueOf(values[2])),
+                            isUploading);
                 }
                 break;
             case UPDATE_FAILURE:
-                this.stop();
+                if (values.length != 3) return;
                 if (callback != null) {
                     callback.onFailure((HttpException) values[1], (String) values[2]);
                 }
                 break;
             case UPDATE_SUCCESS:
+                if (values.length != 2) return;
                 if (callback != null) {
-                    callback.onSuccess((T) values[1]);
+                    callback.onSuccess((ResponseInfo<T>) values[1]);
                 }
                 break;
             default:
                 break;
         }
-        super.onProgressUpdate(values);
     }
 
-    private Object handleResponse(HttpResponse response) throws HttpException, IOException {
+    @SuppressWarnings("unchecked")
+    private ResponseInfo<T> handleResponse(HttpResponse response) throws HttpException, IOException {
         if (response == null) {
             throw new HttpException("response is null");
         }
+        if (isCancelled()) return null;
+
         StatusLine status = response.getStatusLine();
         int statusCode = status.getStatusCode();
         if (statusCode < 300) {
+            Object result = null;
             HttpEntity entity = response.getEntity();
-            Object responseBody = null;
             if (entity != null) {
+                isUploading = false;
                 lastUpdateTime = SystemClock.uptimeMillis();
                 if (isDownloadingFile) {
+                    autoResume = autoResume && OtherUtils.isSupportRange(response);
                     String responseFileName = autoRename ? OtherUtils.getFileNameFromHttpResponse(response) : null;
-                    responseBody = mFileDownloadHandler.handleEntity(entity, this, fileSavePath, autoResume, responseFileName);
+                    result = mFileDownloadHandler.handleEntity(entity, this, fileSavePath, autoResume, responseFileName);
                 } else {
 
                     // Set charset from response header info if it's exist.
                     String responseCharset = OtherUtils.getCharsetFromHttpResponse(response);
                     charset = TextUtils.isEmpty(responseCharset) ? charset : responseCharset;
 
-                    responseBody = mStringDownloadHandler.handleEntity(entity, this, charset);
-                    HttpUtils.sHttpGetCache.put(_getRequestUrl, (String) responseBody, expiry);
+                    result = mStringDownloadHandler.handleEntity(entity, this, charset);
+                    HttpUtils.sHttpGetCache.put(_getRequestUrl, (String) result, expiry);
                 }
             }
-            return responseBody;
+            return new ResponseInfo<T>(response, (T) result, false);
         } else if (statusCode == 301 || statusCode == 302) {
             if (httpRedirectHandler == null) {
                 httpRedirectHandler = new DefaultHttpRedirectHandler();
@@ -236,42 +252,49 @@ public class HttpHandler<T> extends CompatibleAsyncTask<Object, Object, Object> 
         return null;
     }
 
-    private boolean mStop = false;
+    private boolean mStopped = false;
 
     /**
      * stop request task.
      */
     @Override
     public void stop() {
-        this.mStop = true;
+        this.mStopped = true;
+        if (!request.isAborted()) {
+            try {
+                request.abort();
+            } catch (Throwable e) {
+            }
+        }
         if (!this.isCancelled()) {
-            this.cancel(true);
+            try {
+                this.cancel(true);
+            } catch (Throwable e) {
+            }
         }
     }
 
-    public boolean isStop() {
-        return mStop;
+    @Override
+    public boolean isStopped() {
+        return mStopped;
     }
 
     private long lastUpdateTime;
 
     @Override
     public boolean updateProgress(long total, long current, boolean forceUpdateUI) {
-        if (mStop) {
-            return !mStop;
-        }
-        if (callback != null) {
+        if (callback != null && !mStopped) {
             if (forceUpdateUI) {
-                publishProgress(UPDATE_LOADING, total, current);
+                this.publishProgress(UPDATE_LOADING, total, current);
             } else {
                 long currTime = SystemClock.uptimeMillis();
                 if (currTime - lastUpdateTime >= callback.getRate()) {
                     lastUpdateTime = currTime;
-                    publishProgress(UPDATE_LOADING, total, current);
+                    this.publishProgress(UPDATE_LOADING, total, current);
                 }
             }
         }
-        return !mStop;
+        return !mStopped;
     }
 
 }

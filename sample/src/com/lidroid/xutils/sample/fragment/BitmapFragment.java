@@ -16,7 +16,9 @@ import com.lidroid.xutils.BitmapUtils;
 import com.lidroid.xutils.HttpUtils;
 import com.lidroid.xutils.ViewUtils;
 import com.lidroid.xutils.bitmap.PauseOnScrollListener;
+import com.lidroid.xutils.exception.HttpException;
 import com.lidroid.xutils.http.RequestCallBack;
+import com.lidroid.xutils.http.ResponseInfo;
 import com.lidroid.xutils.http.client.HttpRequest;
 import com.lidroid.xutils.sample.ImageActivity;
 import com.lidroid.xutils.sample.R;
@@ -88,9 +90,13 @@ public class BitmapFragment extends Fragment {
         new HttpUtils().send(HttpRequest.HttpMethod.GET, url,
                 new RequestCallBack<String>() {
                     @Override
-                    public void onSuccess(String result) {
-                        imageListAdapter.addSrc(getImgSrcList(result));
+                    public void onSuccess(ResponseInfo<String> responseInfo) {
+                        imageListAdapter.addSrc(getImgSrcList(responseInfo.result));
                         imageListAdapter.notifyDataSetChanged();//通知listview更新数据
+                    }
+
+                    @Override
+                    public void onFailure(HttpException error, String msg) {
                     }
                 });
     }

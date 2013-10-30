@@ -17,12 +17,12 @@ package com.lidroid.xutils.http.client.entity;
 
 import com.lidroid.xutils.http.client.callback.RequestCallBackHandler;
 import com.lidroid.xutils.util.IOUtils;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.HttpEntityWrapper;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 
 /**
@@ -105,7 +105,7 @@ abstract class DecompressingEntity extends HttpEntityWrapper implements UploadEn
                 uploadedSize += len;
                 if (callBackHandler != null) {
                     if (!callBackHandler.updateProgress(uncompressedLength, uploadedSize, false)) {
-                        break;
+                        throw new InterruptedIOException("stop");
                     }
                 }
             }

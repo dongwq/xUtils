@@ -19,9 +19,7 @@ import com.lidroid.xutils.DbUtils;
 import com.lidroid.xutils.db.table.*;
 import com.lidroid.xutils.exception.DbException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Build "insert", "replace",，"update", "delete" and "create" sql.
@@ -149,10 +147,16 @@ public class SqlInfoBuilder {
 
     //*********************************************** update sql ***********************************************
 
-    public static SqlInfo buildUpdateSqlInfo(DbUtils db, Object entity) throws DbException {
+    public static SqlInfo buildUpdateSqlInfo(DbUtils db, Object entity, String... updateColumnNames) throws DbException {
 
         List<KeyValue> keyValueList = entity2KeyValueList(db, entity);
         if (keyValueList.size() == 0) return null;
+
+        HashSet<String> updateColumnNameSet = null;
+        if (updateColumnNames != null && updateColumnNames.length > 0) {
+            updateColumnNameSet = new HashSet<String>(updateColumnNames.length);
+            Collections.addAll(updateColumnNameSet, updateColumnNames);
+        }
 
         Table table = Table.get(entity.getClass());
         Id id = table.getId();
@@ -167,8 +171,10 @@ public class SqlInfoBuilder {
         sqlBuffer.append(table.getTableName());
         sqlBuffer.append(" SET ");
         for (KeyValue kv : keyValueList) {
-            sqlBuffer.append(kv.getKey()).append("=?,");
-            result.addBindArg(kv.getValue());
+            if (updateColumnNameSet == null || updateColumnNameSet.contains(kv.getValue())) {
+                sqlBuffer.append(kv.getKey()).append("=?,");
+                result.addBindArg(kv.getValue());
+            }
         }
         sqlBuffer.deleteCharAt(sqlBuffer.length() - 1);
         sqlBuffer.append(" WHERE ").append(WhereBuilder.b(id.getColumnName(), "=", idValue));
@@ -177,10 +183,16 @@ public class SqlInfoBuilder {
         return result;
     }
 
-    public static SqlInfo buildUpdateSqlInfo(DbUtils db, Object entity, WhereBuilder whereBuilder) throws DbException {
+    public static SqlInfo buildUpdateSqlInfo(DbUtils db, Object entity, WhereBuilder whereBuilder, String... updateColumnNames) throws DbException {
 
         List<KeyValue> keyValueList = entity2KeyValueList(db, entity);
         if (keyValueList.size() == 0) return null;
+
+        HashSet<String> updateColumnNameSet = null;
+        if (updateColumnNames != null && updateColumnNames.length > 0) {
+            updateColumnNameSet = new HashSet<String>(updateColumnNames.length);
+            Collections.addAll(updateColumnNameSet, updateColumnNames);
+        }
 
         Table table = Table.get(entity.getClass());
 
@@ -189,8 +201,10 @@ public class SqlInfoBuilder {
         sqlBuffer.append(table.getTableName());
         sqlBuffer.append(" SET ");
         for (KeyValue kv : keyValueList) {
-            sqlBuffer.append(kv.getKey()).append("=?,");
-            result.addBindArg(kv.getValue());
+            if (updateColumnNameSet == null || updateColumnNameSet.contains(kv.getValue())) {
+                sqlBuffer.append(kv.getKey()).append("=?,");
+                result.addBindArg(kv.getValue());
+            }
         }
         sqlBuffer.deleteCharAt(sqlBuffer.length() - 1);
         if (whereBuilder != null && whereBuilder.getWhereItemSize() > 0) {
@@ -260,9 +274,9 @@ public class SqlInfoBuilder {
 
         Table table = Table.get(entity.getClass());
         Id id = table.getId();
-        Object idValue = TableUtils.getIdValue(entity);
 
-        if (id != null && idValue != null) {
+        if (!id.isAutoIncrement()) {
+            Object idValue = TableUtils.getIdValue(entity);
             KeyValue kv = new KeyValue(id.getColumnName(), idValue);
             keyValueList.add(kv);
         }

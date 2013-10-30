@@ -13,6 +13,7 @@ import com.lidroid.xutils.ViewUtils;
 import com.lidroid.xutils.exception.HttpException;
 import com.lidroid.xutils.http.HttpHandler;
 import com.lidroid.xutils.http.RequestCallBack;
+import com.lidroid.xutils.http.ResponseInfo;
 import com.lidroid.xutils.http.client.HttpRequest;
 import com.lidroid.xutils.http.client.RequestParams;
 import com.lidroid.xutils.http.client.ResponseStream;
@@ -39,6 +40,13 @@ public class HttpFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        downloadBtn.setEnabled(handler == null || handler.isStopped());
+        stopBtn.setEnabled(!downloadBtn.isEnabled());
+    }
+
     @ViewInject(R.id.download_addr_edit)
     private EditText downloadAddrEdit;
 
@@ -53,32 +61,42 @@ public class HttpFragment extends Fragment {
 
     @OnClick(R.id.download_btn)
     public void download(View view) {
+
+        downloadBtn.setEnabled(false);
+        stopBtn.setEnabled(true);
+
         HttpUtils http = new HttpUtils();
         handler = http.download(
                 downloadAddrEdit.getText().toString(),
-                "/sdcard/fileexplorer.apk",
-                true, // 如果目标文件存在，接着未完成的部分继续下载。
+                "/sdcard/lzfile.apk",
+                true, // 如果目标文件存在，接着未完成的部分继续下载。服务器不支持RANGE时将从新下载。
                 true, // 如果从请求返回信息中获取到文件名，下载完成后自动重命名。
-                new RequestCallBack<File>() {
+                //new RequestCallBack<File>() { // userTag is null
+                new RequestCallBack<File>("my custom tag") {
 
                     @Override
                     public void onStart() {
-                        resultText.setText("conn...");
+                        resultText.setText("conn..." + "\n" + this.userTag);
                     }
 
                     @Override
-                    public void onLoading(long total, long current) {
+                    public void onLoading(long total, long current, boolean isUploading) {
                         resultText.setText(current + "/" + total);
                     }
 
                     @Override
-                    public void onSuccess(File result) {
-                        resultText.setText("downloaded:" + result.getPath());
+                    public void onSuccess(ResponseInfo<File> responseInfo) {
+                        resultText.setText("downloaded:" + responseInfo.result.getPath());
+                        downloadBtn.setEnabled(false);
+                        stopBtn.setEnabled(false);
                     }
 
                     @Override
                     public void onFailure(HttpException error, String msg) {
+                        // error.getCause(); //内部错误
                         resultText.setText(error.getExceptionCode() + ":" + msg);
+                        downloadBtn.setEnabled(true);
+                        stopBtn.setEnabled(false);
                     }
                 });
     }
@@ -87,7 +105,9 @@ public class HttpFragment extends Fragment {
     public void stop(View view) {
         if (handler != null) {
             handler.stop();
-            resultText.setText("stopped");
+            resultText.setText(resultText.getText() + " stopped");
+            downloadBtn.setEnabled(true);
+            stopBtn.setEnabled(false);
         }
     }
 
@@ -115,13 +135,17 @@ public class HttpFragment extends Fragment {
                     }
 
                     @Override
-                    public void onLoading(long total, long current) {
-                        resultText.setText(current + "/" + total);
+                    public void onLoading(long total, long current, boolean isUploading) {
+                        if (isUploading) {
+                            resultText.setText("upload: " + current + "/" + total);
+                        } else {
+                            resultText.setText("reply: " + current + "/" + total);
+                        }
                     }
 
                     @Override
-                    public void onSuccess(String result) {
-                        resultText.setText("upload response:" + result);
+                    public void onSuccess(ResponseInfo<String> responseInfo) {
+                        resultText.setText("reply: " + responseInfo.result);
                     }
 
 
@@ -134,10 +158,16 @@ public class HttpFragment extends Fragment {
 
     //@OnClick(R.id.download_btn)
     public void testGet(View view) {
+
+        //RequestParams params = new RequestParams();
+        //params.addHeader("name", "value");
+        //params.addQueryStringParameter("name", "value");
+
         HttpUtils http = new HttpUtils();
         http.configCurrentHttpGetCacheExpiry(1000 * 10);
         http.send(HttpRequest.HttpMethod.GET,
                 "http://www.baidu.com",
+                //params,
                 new RequestCallBack<String>() {
 
                     @Override
@@ -146,13 +176,13 @@ public class HttpFragment extends Fragment {
                     }
 
                     @Override
-                    public void onLoading(long total, long current) {
+                    public void onLoading(long total, long current, boolean isUploading) {
                         resultText.setText(current + "/" + total);
                     }
 
                     @Override
-                    public void onSuccess(String result) {
-                        resultText.setText("response:" + result);
+                    public void onSuccess(ResponseInfo<String> responseInfo) {
+                        resultText.setText("response:" + responseInfo.result);
                     }
 
 
@@ -163,6 +193,7 @@ public class HttpFragment extends Fragment {
                 });
     }
 
+    //@OnClick(R.id.download_btn)
     public void testPost(View view) {
         RequestParams params = new RequestParams();
         params.addQueryStringParameter("method", "mkdir");
@@ -181,13 +212,13 @@ public class HttpFragment extends Fragment {
                     }
 
                     @Override
-                    public void onLoading(long total, long current) {
+                    public void onLoading(long total, long current, boolean isUploading) {
                         resultText.setText(current + "/" + total);
                     }
 
                     @Override
-                    public void onSuccess(String result) {
-                        resultText.setText("upload response:" + result);
+                    public void onSuccess(ResponseInfo<String> responseInfo) {
+                        resultText.setText("upload response:" + responseInfo.result);
                     }
 
 
@@ -207,6 +238,8 @@ public class HttpFragment extends Fragment {
         http.configCurrentHttpGetCacheExpiry(1000 * 10);
         try {
             ResponseStream responseStream = http.sendSync(HttpRequest.HttpMethod.GET, "http://www.baidu.com/s", params);
+            //int statusCode = responseStream.getStatusCode();
+            //Header[] headers = responseStream.getBaseResponse().getAllHeaders();
             return responseStream.readString();
         } catch (Exception e) {
             LogUtils.e(e.getMessage(), e);
