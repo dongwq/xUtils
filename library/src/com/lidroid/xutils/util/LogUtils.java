@@ -40,7 +40,7 @@ public class LogUtils {
     }
 
     // default level info
-    public static int LEVEL = LogUtils.ASSERT;
+    public static int LEVEL = LogUtils.WARN;
 
     public static final int VERBOSE = 2;
     public static final int DEBUG = 3;
@@ -59,7 +59,7 @@ public class LogUtils {
     }
 
     public static <T> void d(T msg) {
-        if (LEVEL < DEBUG) return;
+        if (LEVEL > DEBUG) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -67,7 +67,7 @@ public class LogUtils {
     }
 
     public static <T> void d(T msg, Throwable tr) {
-        if (LEVEL < DEBUG) return;
+        if (LEVEL > DEBUG) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -75,7 +75,7 @@ public class LogUtils {
     }
 
     public static <T> void e(T msg) {
-        if (LEVEL < ERROR) return;
+        if (LEVEL > ERROR) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -83,7 +83,7 @@ public class LogUtils {
     }
 
     public static <T> void e(T msg, Throwable tr) {
-        if (LEVEL < ERROR) return;
+        if (LEVEL > ERROR) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -91,7 +91,7 @@ public class LogUtils {
     }
 
     public static <T> void i(T msg) {
-        if (LEVEL < INFO) return;
+        if (LEVEL > INFO) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -99,7 +99,7 @@ public class LogUtils {
     }
 
     public static <T> void i(T msg, Throwable tr) {
-        if (LEVEL < INFO) return;
+        if (LEVEL > INFO) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -107,7 +107,7 @@ public class LogUtils {
     }
 
     public static <T> void v(T msg) {
-        if (LEVEL < VERBOSE) return;
+        if (LEVEL > VERBOSE) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -115,7 +115,7 @@ public class LogUtils {
     }
 
     public static <T> void v(T msg, Throwable tr) {
-        if (LEVEL < VERBOSE) return;
+        if (LEVEL > VERBOSE) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -123,7 +123,7 @@ public class LogUtils {
     }
 
     public static <T> void w(T msg) {
-        if (LEVEL < WARN) return;
+        if (LEVEL > WARN) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -131,7 +131,7 @@ public class LogUtils {
     }
 
     public static <T> void w(T msg, Throwable tr) {
-        if (LEVEL < WARN) return;
+        if (LEVEL > WARN) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -139,7 +139,7 @@ public class LogUtils {
     }
 
     public static void w(Throwable tr) {
-        if (LEVEL < WARN) return;
+        if (LEVEL > WARN) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         Log.w(tag, tr);
@@ -147,7 +147,7 @@ public class LogUtils {
 
 
     public static <T> void wtf(T msg) {
-        if (LEVEL < ASSERT) return;
+        if (LEVEL > ASSERT) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -155,7 +155,7 @@ public class LogUtils {
     }
 
     public static <T> void wtf(T msg, Throwable tr) {
-        if (LEVEL < ASSERT) return;
+        if (LEVEL > ASSERT) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         String content = msg == null ? "null" : msg.toString();
@@ -163,7 +163,7 @@ public class LogUtils {
     }
 
     public static void wtf(Throwable tr) {
-        if (LEVEL < ASSERT) return;
+        if (LEVEL > ASSERT) return;
         StackTraceElement caller = OtherUtils.getCallerStackTraceElement();
         String tag = generateTag(caller);
         Log.wtf(tag, tr);
