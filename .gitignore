@@ -19,7 +19,7 @@ local.properties
 .project
 
 # IDEA project files
-*.iml
+# *.iml
 .idea/
 
 # others
