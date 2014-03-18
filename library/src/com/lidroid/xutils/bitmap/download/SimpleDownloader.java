@@ -15,6 +15,7 @@
 
 package com.lidroid.xutils.bitmap.download;
 
+import com.lidroid.xutils.BitmapUtils;
 import com.lidroid.xutils.util.IOUtils;
 import com.lidroid.xutils.util.LogUtils;
 import com.lidroid.xutils.util.OtherUtils;
@@ -22,13 +23,14 @@ import com.lidroid.xutils.util.OtherUtils;
 import javax.net.ssl.*;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.cert.X509Certificate;
 
 
-public class SimpleDownloader implements Downloader {
+public class SimpleDownloader extends Downloader {
 
     /**
      * Download bitmap to outputStream by uri.
@@ -38,13 +40,18 @@ public class SimpleDownloader implements Downloader {
      * @return The expiry time stamp or -1 if failed to download.
      */
     @Override
-    public long downloadToStream(String uri, OutputStream outputStream) {
+    public long downloadToStream(String uri, OutputStream outputStream, final BitmapUtils.BitmapLoadTask<?> task) {
+
+        if (task == null || task.isCancelled() || task.getTargetContainer() == null) return -1;
+
         URLConnection urlConnection = null;
         BufferedInputStream bis = null;
 
         OtherUtils.trustAllSSLForHttpsURLConnection();
 
         long result = -1;
+        long fileLen = 0;
+        long currCount = 0;
         try {
 
             // Create a trust manager that does not validate certificate chains
@@ -75,22 +82,34 @@ public class SimpleDownloader implements Downloader {
 
             if (uri.startsWith("/")) {
                 FileInputStream fileInputStream = new FileInputStream(uri);
+                fileLen = fileInputStream.available();
                 bis = new BufferedInputStream(fileInputStream);
-                result = System.currentTimeMillis() + getDefaultExpiry();
+                result = System.currentTimeMillis() + this.getDefaultExpiry();
+            } else if (uri.startsWith("assets/")) {
+                InputStream inputStream = this.getContext().getAssets().open(uri.substring(7, uri.length()));
+                fileLen = inputStream.available();
+                bis = new BufferedInputStream(inputStream);
+                result = Long.MAX_VALUE;
             } else {
                 final URL url = new URL(uri);
                 urlConnection = url.openConnection();
-                urlConnection.setConnectTimeout(1000 * 15);
-                urlConnection.setReadTimeout(1000 * 30);
+                urlConnection.setConnectTimeout(this.getDefaultConnectTimeout());
+                urlConnection.setReadTimeout(this.getDefaultReadTimeout());
                 bis = new BufferedInputStream(urlConnection.getInputStream());
-                result = urlConnection.getExpiration(); // 如果header中不包含expires返回0
-                result = result < System.currentTimeMillis() ? System.currentTimeMillis() + getDefaultExpiry() : result;
+                result = urlConnection.getExpiration();
+                result = result < System.currentTimeMillis() ? System.currentTimeMillis() + this.getDefaultExpiry() : result;
+                fileLen = urlConnection.getContentLength();
             }
+
+            if (task.isCancelled() || task.getTargetContainer() == null) return -1;
 
             byte[] buffer = new byte[4096];
             int len = 0;
             while ((len = bis.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, len);
+                currCount += len;
+                if (task.isCancelled() || task.getTargetContainer() == null) return -1;
+                task.updateProgress(fileLen, currCount);
             }
             outputStream.flush();
         } catch (Throwable e) {
@@ -100,17 +119,5 @@ public class SimpleDownloader implements Downloader {
             IOUtils.closeQuietly(bis);
         }
         return result;
-    }
-
-    private long defaultExpiry;
-
-    @Override
-    public void setDefaultExpiry(long expiry) {
-        this.defaultExpiry = expiry;
-    }
-
-    @Override
-    public long getDefaultExpiry() {
-        return this.defaultExpiry;
     }
 }

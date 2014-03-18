@@ -18,6 +18,7 @@ package com.lidroid.xutils.db.table;
 import android.text.TextUtils;
 import com.lidroid.xutils.db.annotation.Id;
 import com.lidroid.xutils.db.annotation.Table;
+import com.lidroid.xutils.db.converter.ColumnConverterFactory;
 import com.lidroid.xutils.util.LogUtils;
 
 import java.lang.reflect.Field;
@@ -36,6 +37,14 @@ public class TableUtils {
             return entityType.getName().replace('.', '_');
         }
         return table.name();
+    }
+
+    public static String getExecAfterTableCreated(Class<?> entityType) {
+        Table table = entityType.getAnnotation(Table.class);
+        if (table != null) {
+            return table.execAfterTableCreated();
+        }
+        return null;
     }
 
     /**
@@ -69,7 +78,7 @@ public class TableUtils {
                 if (ColumnUtils.isTransient(field) || Modifier.isStatic(field.getModifiers())) {
                     continue;
                 }
-                if (ColumnUtils.isSimpleColumnType(field)) {
+                if (ColumnConverterFactory.isSupportColumnConverter(field.getType())) {
                     if (!field.getName().equals(primaryKeyFieldName)) {
                         Column column = new Column(entityType, field);
                         if (!columnMap.containsKey(column.getColumnName())) {
@@ -99,7 +108,7 @@ public class TableUtils {
 
     public static Column getColumnOrId(Class<?> entityType, String columnName) {
         if (getPrimaryKeyColumnName(entityType).equals(columnName)) {
-            return com.lidroid.xutils.db.table.Table.get(entityType).getId();
+            return getId(entityType);
         }
         return getColumnMap(entityType).get(columnName);
     }
@@ -107,7 +116,7 @@ public class TableUtils {
     public static Column getColumnOrId(Class<?> entityType, Field columnField) {
         String columnName = ColumnUtils.getColumnNameByField(columnField);
         if (getPrimaryKeyColumnName(entityType).equals(columnName)) {
-            return com.lidroid.xutils.db.table.Table.get(entityType).getId();
+            return getId(entityType);
         }
         return getColumnMap(entityType).get(columnName);
     }
@@ -164,23 +173,5 @@ public class TableUtils {
     private static String getPrimaryKeyColumnName(Class<?> entityType) {
         com.lidroid.xutils.db.table.Id id = getId(entityType);
         return id == null ? null : id.getColumnName();
-    }
-
-    public static Object getIdValue(Object entity) {
-        if (entity == null) return null;
-
-        try {
-            com.lidroid.xutils.db.table.Id id = getId(entity.getClass());
-            if (id == null) return null;
-            Object idValue = id.getColumnValue(entity);
-            if (idValue != null && !idValue.equals(0) && idValue.toString().length() > 0) {
-                return idValue;
-            } else {
-                return null;
-            }
-        } catch (Throwable e) {
-            LogUtils.e(e.getMessage(), e);
-        }
-        return null;
     }
 }

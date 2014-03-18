@@ -15,61 +15,34 @@
 
 package com.lidroid.xutils.bitmap;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.animation.Animation;
-import com.lidroid.xutils.bitmap.callback.ImageLoadCallBack;
-import com.lidroid.xutils.bitmap.callback.SimpleImageLoadCallBack;
-import com.lidroid.xutils.bitmap.core.BitmapCommonUtils;
+import com.lidroid.xutils.bitmap.core.BitmapSize;
 
 public class BitmapDisplayConfig {
 
-    private int bitmapMaxWidth = 0;
-    private int bitmapMaxHeight = 0;
-
+    private BitmapSize bitmapMaxSize;
     private Animation animation;
-
     private Drawable loadingDrawable;
     private Drawable loadFailedDrawable;
-
-    private ImageLoadCallBack imageLoadCallBack;
-
+    private boolean autoRotation = false;
     private boolean showOriginal = false;
-
     private Bitmap.Config bitmapConfig = Bitmap.Config.RGB_565;
-
-    private Context mContext;
 
     private static final Drawable TRANSPARENT_DRAWABLE = new ColorDrawable(Color.TRANSPARENT);
 
-    public BitmapDisplayConfig(Context context) {
-        if (context == null) throw new IllegalArgumentException("context may not be null");
-        mContext = context;
+    public BitmapDisplayConfig() {
     }
 
-    public int getBitmapMaxWidth() {
-        if (bitmapMaxWidth == 0) {// default max width = screen_width/3
-            bitmapMaxWidth = BitmapCommonUtils.getScreenWidth(mContext) / 3;
-        }
-        return bitmapMaxWidth;
+    public BitmapSize getBitmapMaxSize() {
+        return bitmapMaxSize == null ? BitmapSize.ZERO : bitmapMaxSize;
     }
 
-    public void setBitmapMaxWidth(int bitmapMaxWidth) {
-        this.bitmapMaxWidth = bitmapMaxWidth;
-    }
-
-    public int getBitmapMaxHeight() {
-        if (bitmapMaxHeight == 0) {// default max height = screen_height/3
-            bitmapMaxHeight = BitmapCommonUtils.getScreenHeight(mContext) / 3;
-        }
-        return bitmapMaxHeight;
-    }
-
-    public void setBitmapMaxHeight(int bitmapMaxHeight) {
-        this.bitmapMaxHeight = bitmapMaxHeight;
+    public void setBitmapMaxSize(BitmapSize bitmapMaxSize) {
+        this.bitmapMaxSize = bitmapMaxSize;
     }
 
     public Animation getAnimation() {
@@ -96,15 +69,12 @@ public class BitmapDisplayConfig {
         this.loadFailedDrawable = loadFailedDrawable;
     }
 
-    public ImageLoadCallBack getImageLoadCallBack() {
-        if (imageLoadCallBack == null) {
-            imageLoadCallBack = new SimpleImageLoadCallBack();
-        }
-        return imageLoadCallBack;
+    public boolean isAutoRotation() {
+        return autoRotation;
     }
 
-    public void setImageLoadCallBack(ImageLoadCallBack imageLoadCallBack) {
-        this.imageLoadCallBack = imageLoadCallBack;
+    public void setAutoRotation(boolean autoRotation) {
+        this.autoRotation = autoRotation;
     }
 
     public boolean isShowOriginal() {
@@ -125,6 +95,18 @@ public class BitmapDisplayConfig {
 
     @Override
     public String toString() {
-        return isShowOriginal() ? "" : "-" + getBitmapMaxWidth() + "-" + getBitmapMaxHeight();
+        return isShowOriginal() ? "" : bitmapMaxSize.toString();
+    }
+
+    public BitmapDisplayConfig cloneNew() {
+        BitmapDisplayConfig config = new BitmapDisplayConfig();
+        config.bitmapMaxSize = this.bitmapMaxSize;
+        config.animation = this.animation;
+        config.loadingDrawable = this.loadingDrawable;
+        config.loadFailedDrawable = this.loadFailedDrawable;
+        config.autoRotation = this.autoRotation;
+        config.showOriginal = this.showOriginal;
+        config.bitmapConfig = this.bitmapConfig;
+        return config;
     }
 }

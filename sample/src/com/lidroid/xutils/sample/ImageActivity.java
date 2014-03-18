@@ -4,10 +4,14 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.widget.ImageView;
+import android.widget.Toast;
 import com.lidroid.xutils.BitmapUtils;
 import com.lidroid.xutils.ViewUtils;
+import com.lidroid.xutils.bitmap.BitmapCommonUtils;
 import com.lidroid.xutils.bitmap.BitmapDisplayConfig;
-import com.lidroid.xutils.bitmap.core.BitmapCommonUtils;
+import com.lidroid.xutils.bitmap.callback.BitmapLoadCallBack;
+import com.lidroid.xutils.bitmap.callback.BitmapLoadFrom;
+import com.lidroid.xutils.bitmap.callback.SimpleBitmapLoadCallBack;
 import com.lidroid.xutils.sample.fragment.BitmapFragment;
 import com.lidroid.xutils.view.annotation.ViewInject;
 
@@ -35,27 +39,30 @@ public class ImageActivity extends Activity {
 
         bitmapUtils = BitmapFragment.bitmapUtils;
         if (bitmapUtils == null) {
-            bitmapUtils = new BitmapUtils(this);
+            bitmapUtils = BitmapHelp.getBitmapUtils(this.getApplicationContext());
         }
 
-        bigPicDisplayConfig = new BitmapDisplayConfig(this);
+        bigPicDisplayConfig = new BitmapDisplayConfig();
         //bigPicDisplayConfig.setShowOriginal(true); // 显示原始图片,不压缩, 尽量不要使用, 图片太大时容易OOM。
         bigPicDisplayConfig.setBitmapConfig(Bitmap.Config.RGB_565);
-        bigPicDisplayConfig.setBitmapMaxWidth(BitmapCommonUtils.getScreenWidth(this));
-        bigPicDisplayConfig.setBitmapMaxHeight(BitmapCommonUtils.getScreenHeight(this));
+        bigPicDisplayConfig.setBitmapMaxSize(BitmapCommonUtils.getScreenSize(this));
 
-        /*bigPicDisplayConfig.setImageLoadCallBack(new SimpleImageLoadCallBack() {
+        BitmapLoadCallBack<ImageView> callback = new SimpleBitmapLoadCallBack<ImageView>() {
             @Override
-            public void loadCompleted(String uri, ImageView imageView, Drawable drawable, BitmapDisplayConfig config) {
-                super.loadCompleted(uri, imageView, drawable, config);
-                if (drawable instanceof BitmapDrawable) {
-                    int w = ((BitmapDrawable) drawable).getBitmap().getWidth();
-                    int h = ((BitmapDrawable) drawable).getBitmap().getHeight();
-                    Toast.makeText(getApplicationContext(), w + "*" + h, 1000).show();
-                }
+            public void onLoadStarted(ImageView container, String uri, BitmapDisplayConfig config) {
+                super.onLoadStarted(container, uri, config);
+                Toast.makeText(getApplicationContext(), uri, 300).show();
             }
-        });*/
 
-        bitmapUtils.display(bigImage, imgUrl, bigPicDisplayConfig);
+            @Override
+            public void onLoadCompleted(ImageView container, String uri, Bitmap bitmap, BitmapDisplayConfig config, BitmapLoadFrom from) {
+                super.onLoadCompleted(container, uri, bitmap, config, from);
+                Toast.makeText(getApplicationContext(), bitmap.getWidth() + "*" + bitmap.getHeight(), 300).show();
+            }
+        };
+
+        bitmapUtils.display(bigImage, imgUrl, bigPicDisplayConfig, callback);
+        // 读取assets中的图片
+        //bitmapUtils.display(bigImage, "assets/img/wallpaper.jpg", bigPicDisplayConfig, callback);
     }
 }

@@ -1,5 +1,6 @@
 package com.lidroid.xutils.db.sqlite;
 
+import com.lidroid.xutils.db.table.ColumnUtils;
 import com.lidroid.xutils.db.table.Finder;
 import com.lidroid.xutils.db.table.TableUtils;
 import com.lidroid.xutils.exception.DbException;
@@ -12,17 +13,17 @@ import java.util.List;
  * Time: 下午10:50
  */
 public class FinderLazyLoader<T> {
-    private Finder finderColumn;
-    private Object finderValue;
+    private final Finder finderColumn;
+    private final Object finderValue;
 
-    public FinderLazyLoader(Class<?> entityType, String fieldName, Object finderValue) {
+    public FinderLazyLoader(Class<?> entityType, String fieldName, Object value) {
         this.finderColumn = (Finder) TableUtils.getColumnOrId(entityType, fieldName);
-        this.finderValue = finderValue;
+        this.finderValue = ColumnUtils.convert2DbColumnValueIfNeeded(value);
     }
 
-    public FinderLazyLoader(Finder finderColumn, Object finderValue) {
+    public FinderLazyLoader(Finder finderColumn, Object value) {
         this.finderColumn = finderColumn;
-        this.finderValue = finderValue;
+        this.finderValue = ColumnUtils.convert2DbColumnValueIfNeeded(value);
     }
 
     public List<T> getAllFromDb() throws DbException {

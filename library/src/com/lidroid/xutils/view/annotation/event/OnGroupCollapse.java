@@ -13,18 +13,23 @@
  * limitations under the License.
  */
 
-package com.lidroid.xutils.http.client.callback;
+package com.lidroid.xutils.view.annotation.event;
 
-public interface RequestCallBackHandler {
-    /**
-     * @param total
-     * @param current
-     * @param forceUpdateUI
-     * @return continue
-     */
-    boolean updateProgress(long total, long current, boolean forceUpdateUI);
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    void stop();
+/**
+ * Author: wyouflf
+ * Date: 13-8-16
+ * Time: 下午2:27
+ */
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@EventBase
+public @interface OnGroupCollapse {
+    int[] value();
 
-    boolean isStopped();
+    int[] parentId() default 0;
 }

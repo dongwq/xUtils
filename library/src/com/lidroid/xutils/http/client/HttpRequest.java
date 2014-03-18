@@ -15,10 +15,12 @@
 
 package com.lidroid.xutils.http.client;
 
-import com.lidroid.xutils.http.client.callback.RequestCallBackHandler;
+import com.lidroid.xutils.http.RequestParams;
+import com.lidroid.xutils.http.callback.RequestCallBackHandler;
 import com.lidroid.xutils.http.client.entity.UploadEntity;
 import com.lidroid.xutils.http.client.util.URIBuilder;
 import com.lidroid.xutils.util.LogUtils;
+import com.lidroid.xutils.util.OtherUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -29,6 +31,7 @@ import org.apache.http.protocol.HTTP;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.List;
 
 /**
@@ -44,6 +47,8 @@ public class HttpRequest extends HttpRequestBase implements HttpEntityEnclosingR
 
     private URIBuilder uriBuilder;
 
+    private Charset uriCharset;
+
     public HttpRequest(HttpMethod method) {
         super();
         this.method = method;
@@ -52,7 +57,7 @@ public class HttpRequest extends HttpRequestBase implements HttpEntityEnclosingR
     public HttpRequest(HttpMethod method, String uri) {
         super();
         this.method = method;
-        setURI(URI.create(uri));
+        setURI(uri);
     }
 
     public HttpRequest(HttpMethod method, URI uri) {
@@ -82,6 +87,9 @@ public class HttpRequest extends HttpRequestBase implements HttpEntityEnclosingR
 
     public void setRequestParams(RequestParams param) {
         if (param != null) {
+            if (uriCharset == null) {
+                uriCharset = Charset.forName(param.getCharset());
+            }
             List<RequestParams.HeaderItem> headerItems = param.getHeaders();
             if (headerItems != null) {
                 for (RequestParams.HeaderItem headerItem : headerItems) {
@@ -99,6 +107,9 @@ public class HttpRequest extends HttpRequestBase implements HttpEntityEnclosingR
 
     public void setRequestParams(RequestParams param, RequestCallBackHandler callBackHandler) {
         if (param != null) {
+            if (uriCharset == null) {
+                uriCharset = Charset.forName(param.getCharset());
+            }
             List<RequestParams.HeaderItem> headerItems = param.getHeaders();
             if (headerItems != null) {
                 for (RequestParams.HeaderItem headerItem : headerItems) {
@@ -123,7 +134,13 @@ public class HttpRequest extends HttpRequestBase implements HttpEntityEnclosingR
     @Override
     public URI getURI() {
         try {
-            return uriBuilder.build();
+            if (uriCharset == null) {
+                uriCharset = OtherUtils.getCharsetFromHttpRequest(this);
+            }
+            if (uriCharset == null) {
+                uriCharset = Charset.forName(HTTP.UTF_8);
+            }
+            return uriBuilder.build(uriCharset);
         } catch (URISyntaxException e) {
             LogUtils.e(e.getMessage(), e);
             return null;
@@ -132,6 +149,10 @@ public class HttpRequest extends HttpRequestBase implements HttpEntityEnclosingR
 
     @Override
     public void setURI(URI uri) {
+        this.uriBuilder = new URIBuilder(uri);
+    }
+
+    public void setURI(String uri) {
         this.uriBuilder = new URIBuilder(uri);
     }
 
@@ -166,7 +187,16 @@ public class HttpRequest extends HttpRequestBase implements HttpEntityEnclosingR
     }
 
     public static enum HttpMethod {
-        GET("GET"), POST("POST"), PUT("PUT"), HEAD("HEAD"), MOVE("MOVE"), COPY("COPY"), DELETE("DELETE");
+        GET("GET"),
+        POST("POST"),
+        PUT("PUT"),
+        HEAD("HEAD"),
+        MOVE("MOVE"),
+        COPY("COPY"),
+        DELETE("DELETE"),
+        OPTIONS("OPTIONS"),
+        TRACE("TRACE"),
+        CONNECT("CONNECT");
 
         private final String value;
 

@@ -15,7 +15,7 @@
 
 package com.lidroid.xutils.http.client.multipart;
 
-import com.lidroid.xutils.http.client.callback.RequestCallBackHandler;
+import com.lidroid.xutils.http.callback.RequestCallBackHandler;
 import com.lidroid.xutils.http.client.entity.UploadEntity;
 import com.lidroid.xutils.http.client.multipart.content.ContentBody;
 import org.apache.http.Header;
@@ -144,10 +144,10 @@ public class MultipartEntity implements HttpEntity, UploadEntity {
         StringBuilder buffer = new StringBuilder();
         buffer.append("multipart/" + multipartSubtype + "; boundary=");
         buffer.append(boundary);
-        if (charset != null) {
+        /*if (charset != null) {
             buffer.append("; charset=");
             buffer.append(charset.name());
-        }
+        }*/
         return buffer.toString();
     }
 

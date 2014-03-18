@@ -20,6 +20,7 @@ import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.protocol.HTTP;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -37,7 +38,7 @@ public class OtherUtils {
     private OtherUtils() {
     }
 
-    public static boolean isSupportRange(HttpResponse response) {
+    public static boolean isSupportRange(final HttpResponse response) {
         if (response == null) return false;
         Header header = response.getFirstHeader("Accept-Ranges");
         if (header != null) {
@@ -51,7 +52,7 @@ public class OtherUtils {
         return false;
     }
 
-    public static String getFileNameFromHttpResponse(HttpResponse response) {
+    public static String getFileNameFromHttpResponse(final HttpResponse response) {
         if (response == null) return null;
         String result = null;
         Header header = response.getFirstHeader("Content-Disposition");
@@ -69,34 +70,34 @@ public class OtherUtils {
         return result;
     }
 
-    public static String getCharsetFromHttpResponse(HttpResponse response) {
-        if (response == null) return null;
-        String result = null;
-        Header header = response.getEntity().getContentType();
+    public static Charset getCharsetFromHttpRequest(final HttpRequestBase request) {
+        if (request == null) return null;
+        String charsetName = null;
+        Header header = request.getFirstHeader("Content-Type");
         if (header != null) {
             for (HeaderElement element : header.getElements()) {
                 NameValuePair charsetPair = element.getParameterByName("charset");
                 if (charsetPair != null) {
-                    result = charsetPair.getValue();
+                    charsetName = charsetPair.getValue();
                     break;
                 }
             }
         }
 
         boolean isSupportedCharset = false;
-        if (!TextUtils.isEmpty(result)) {
+        if (!TextUtils.isEmpty(charsetName)) {
             try {
-                isSupportedCharset = Charset.isSupported(result);
+                isSupportedCharset = Charset.isSupported(charsetName);
             } catch (Throwable e) {
             }
         }
 
-        return isSupportedCharset ? result : null;
+        return isSupportedCharset ? Charset.forName(charsetName) : null;
     }
 
     private static final int STRING_BUFFER_LENGTH = 100;
 
-    public static long sizeOfString(String str, String charset) throws UnsupportedEncodingException {
+    public static long sizeOfString(final String str, String charset) throws UnsupportedEncodingException {
         if (TextUtils.isEmpty(str)) {
             return 0;
         }
@@ -115,7 +116,7 @@ public class OtherUtils {
     }
 
     // get the sub string for large string
-    public static String getSubString(String str, int start, int end) {
+    public static String getSubString(final String str, int start, int end) {
         return new String(str.substring(start, end));
     }
 

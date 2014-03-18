@@ -15,15 +15,10 @@
 
 package com.lidroid.xutils.http;
 
-import android.text.TextUtils;
 import com.lidroid.xutils.HttpUtils;
 import com.lidroid.xutils.exception.HttpException;
-import com.lidroid.xutils.http.client.HttpGetCache;
-import com.lidroid.xutils.http.client.HttpRequest;
-import com.lidroid.xutils.http.client.ResponseStream;
-import com.lidroid.xutils.http.client.callback.DefaultHttpRedirectHandler;
-import com.lidroid.xutils.http.client.callback.HttpRedirectHandler;
-import com.lidroid.xutils.util.OtherUtils;
+import com.lidroid.xutils.http.callback.DefaultHttpRedirectHandler;
+import com.lidroid.xutils.http.callback.HttpRedirectHandler;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpRequestRetryHandler;
@@ -39,15 +34,17 @@ public class SyncHttpHandler {
     private final AbstractHttpClient client;
     private final HttpContext context;
 
-    private int retriedTimes = 0;
-
-    private String charset; // The default charset of response header info.
-
     private HttpRedirectHandler httpRedirectHandler;
 
     public void setHttpRedirectHandler(HttpRedirectHandler httpRedirectHandler) {
         this.httpRedirectHandler = httpRedirectHandler;
     }
+
+    private String requestUrl;
+    private String requestMethod;
+    private String charset; // The default charset of response header info.
+
+    private int retriedTimes = 0;
 
     public SyncHttpHandler(AbstractHttpClient client, HttpContext context, String charset) {
         this.client = client;
@@ -55,8 +52,8 @@ public class SyncHttpHandler {
         this.charset = charset;
     }
 
-    private String _getMethodRequestUrl; // If current request not http "get" method, it will be null.
-    private long expiry = HttpGetCache.getDefaultExpiryTime();
+
+    private long expiry = HttpCache.getDefaultExpiryTime();
 
     public void setExpiry(long expiry) {
         this.expiry = expiry;
@@ -69,17 +66,15 @@ public class SyncHttpHandler {
         while (retry) {
             IOException exception = null;
             try {
-                if (request.getMethod().equals(HttpRequest.HttpMethod.GET.toString())) {
-                    _getMethodRequestUrl = request.getURI().toString();
-                } else {
-                    _getMethodRequestUrl = null;
-                }
-                if (_getMethodRequestUrl != null) {
-                    String result = HttpUtils.sHttpGetCache.get(_getMethodRequestUrl);
+                requestUrl = request.getURI().toString();
+                requestMethod = request.getMethod();
+                if (HttpUtils.sHttpCache.isEnabled(requestMethod)) {
+                    String result = HttpUtils.sHttpCache.get(requestUrl);
                     if (result != null) {
                         return new ResponseStream(result);
                     }
                 }
+
                 HttpResponse response = client.execute(request, context);
                 return handleResponse(response);
             } catch (UnknownHostException e) {
@@ -113,12 +108,9 @@ public class SyncHttpHandler {
         StatusLine status = response.getStatusLine();
         int statusCode = status.getStatusCode();
         if (statusCode < 300) {
-
-            // Set charset from response header if it's exist.
-            String responseCharset = OtherUtils.getCharsetFromHttpResponse(response);
-            charset = TextUtils.isEmpty(responseCharset) ? charset : responseCharset;
-
-            return new ResponseStream(response, charset, _getMethodRequestUrl, expiry);
+            ResponseStream responseStream = new ResponseStream(response, charset, requestUrl, expiry);
+            responseStream.setRequestMethod(requestMethod);
+            return responseStream;
         } else if (statusCode == 301 || statusCode == 302) {
             if (httpRedirectHandler == null) {
                 httpRedirectHandler = new DefaultHttpRedirectHandler();

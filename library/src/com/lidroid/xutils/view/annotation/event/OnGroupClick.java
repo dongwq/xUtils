@@ -13,17 +13,23 @@
  * limitations under the License.
  */
 
-package com.lidroid.xutils.http.client.callback;
+package com.lidroid.xutils.view.annotation.event;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Created with IntelliJ IDEA.
- * User: wyouflf
- * Date: 13-7-17
- * Time: 上午10:36
+ * Author: wyouflf
+ * Date: 13-8-16
+ * Time: 下午2:27
  */
-public interface HttpRedirectHandler {
-    HttpRequestBase getDirectRequest(HttpResponse response);
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@EventBase
+public @interface OnGroupClick {
+    int[] value();
+
+    int[] parentId() default 0;
 }

@@ -24,17 +24,20 @@ import com.lidroid.xutils.util.core.DoubleKeyValueMap;
 public class CursorUtils {
 
     @SuppressWarnings("unchecked")
-    public static <T> T getEntity(DbUtils db, Cursor cursor, Class<T> entityType, long findCacheSequence) {
+    public static <T> T getEntity(final DbUtils db, final Cursor cursor, Class<T> entityType, long findCacheSequence) {
         if (db == null || cursor == null) return null;
 
         EntityTempCache.setSeq(findCacheSequence);
         try {
-            Table table = Table.get(entityType);
-            int idIndex = cursor.getColumnIndex(table.getId().getColumnName());
+            Table table = Table.get(db, entityType);
+            Id id = table.getId();
+            String idColumnName = id.getColumnName();
+            int idIndex = cursor.getColumnIndex(idColumnName);
             String idStr = cursor.getString(idIndex);
             T entity = EntityTempCache.get(entityType, idStr);
             if (entity == null) {
                 entity = entityType.newInstance();
+                id.setValue2Entity(entity, cursor, idIndex);
                 EntityTempCache.put(entity, idStr);
             } else {
                 return entity;
@@ -46,25 +49,19 @@ public class CursorUtils {
                 if (column != null) {
                     if (column instanceof Foreign) {
                         Foreign foreign = (Foreign) column;
-                        if (foreign.getFieldValue(entity) == null) {
-                            foreign.db = db;
-                            foreign.setValue2Entity(entity, cursor.getString(i));
-                        }
+                        foreign.db = db;
+                        foreign.setValue2Entity(entity, cursor, i);
                     } else {
-                        column.setValue2Entity(entity, cursor.getString(i));
+                        column.setValue2Entity(entity, cursor, i);
                     }
-                } else if (columnName.equals(table.getId().getColumnName())) {
-                    table.getId().setValue2Entity(entity, cursor.getString(i));
                 }
             }
 
             for (Column column : table.columnMap.values()) {
                 if (column instanceof Finder) {
                     Finder finder = (Finder) column;
-                    if (finder.getFieldValue(entity) == null) {
-                        finder.db = db;
-                        finder.setValue2Entity(entity, null);
-                    }
+                    finder.db = db;
+                    finder.setValue2Entity(entity, null, 0);
                 }
             }
             return entity;
@@ -75,7 +72,7 @@ public class CursorUtils {
         return null;
     }
 
-    public static DbModel getDbModel(Cursor cursor) {
+    public static DbModel getDbModel(final Cursor cursor) {
         DbModel result = null;
         if (cursor != null) {
             result = new DbModel();
@@ -115,7 +112,9 @@ public class CursorUtils {
         private static long seq = 0;
 
         public static void put(Object entity, String idStr) {
-            cache.put(entity.getClass(), idStr, entity);
+            if (entity != null && idStr != null) {
+                cache.put(entity.getClass(), idStr, entity);
+            }
         }
 
         @SuppressWarnings("unchecked")

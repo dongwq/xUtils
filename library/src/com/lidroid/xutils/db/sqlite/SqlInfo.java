@@ -59,7 +59,8 @@ public class SqlInfo {
         if (bindArgs != null) {
             String[] strings = new String[bindArgs.size()];
             for (int i = 0; i < bindArgs.size(); i++) {
-                strings[i] = bindArgs.get(i).toString();
+                Object value = bindArgs.get(i);
+                strings[i] = value == null ? null : value.toString();
             }
             return strings;
         }
@@ -72,6 +73,14 @@ public class SqlInfo {
         }
 
         bindArgs.add(ColumnUtils.convert2DbColumnValueIfNeeded(arg));
+    }
+
+    /* package */ void addBindArgWithoutConverter(Object arg) {
+        if (bindArgs == null) {
+            bindArgs = new LinkedList<Object>();
+        }
+
+        bindArgs.add(arg);
     }
 
     public void addBindArgs(Object... bindArgs) {

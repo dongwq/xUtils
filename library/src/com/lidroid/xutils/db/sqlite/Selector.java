@@ -15,7 +15,7 @@
 
 package com.lidroid.xutils.db.sqlite;
 
-import com.lidroid.xutils.db.table.Table;
+import com.lidroid.xutils.db.table.TableUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ public class Selector {
 
     private Selector(Class<?> entityType) {
         this.entityType = entityType;
-        this.tableName = Table.get(entityType).getTableName();
+        this.tableName = TableUtils.getTableName(entityType);
     }
 
     public static Selector from(Class<?> entityType) {
@@ -75,11 +75,17 @@ public class Selector {
     }
 
     public Selector expr(String expr) {
+        if (this.whereBuilder == null) {
+            this.whereBuilder = WhereBuilder.b();
+        }
         this.whereBuilder.expr(expr);
         return this;
     }
 
     public Selector expr(String columnName, String op, Object value) {
+        if (this.whereBuilder == null) {
+            this.whereBuilder = WhereBuilder.b();
+        }
         this.whereBuilder.expr(columnName, op, value);
         return this;
     }

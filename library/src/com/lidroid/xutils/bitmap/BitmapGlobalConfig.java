@@ -19,7 +19,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.text.TextUtils;
 import com.lidroid.xutils.bitmap.core.BitmapCache;
-import com.lidroid.xutils.bitmap.core.BitmapCommonUtils;
 import com.lidroid.xutils.bitmap.download.Downloader;
 import com.lidroid.xutils.bitmap.download.SimpleDownloader;
 import com.lidroid.xutils.util.LogUtils;
@@ -65,7 +64,9 @@ public class BitmapGlobalConfig {
     private boolean _dirty_params_bitmapLoadExecutor = true;
     private ExecutorService bitmapLoadExecutor;
 
-    private long defaultCacheExpiry = 1000L * 60 * 60 * 24 * 30; // 默认30天过期
+    private long defaultCacheExpiry = 1000L * 60 * 60 * 24 * 30; // 30 days
+    private int defaultConnectTimeout = 1000 * 15; // 15 sec
+    private int defaultReadTimeout = 1000 * 15; // 15 sec
 
     private LruDiskCache.DiskCacheFileNameGenerator diskCacheFileNameGenerator;
 
@@ -110,14 +111,16 @@ public class BitmapGlobalConfig {
     public Downloader getDownloader() {
         if (downloader == null) {
             downloader = new SimpleDownloader();
-            downloader.setDefaultExpiry(getDefaultCacheExpiry());
         }
+        downloader.setContext(mContext);
+        downloader.setDefaultExpiry(getDefaultCacheExpiry());
+        downloader.setDefaultConnectTimeout(getDefaultConnectTimeout());
+        downloader.setDefaultReadTimeout(getDefaultReadTimeout());
         return downloader;
     }
 
     public void setDownloader(Downloader downloader) {
         this.downloader = downloader;
-        this.downloader.setDefaultExpiry(getDefaultCacheExpiry());
     }
 
     public long getDefaultCacheExpiry() {
@@ -126,9 +129,22 @@ public class BitmapGlobalConfig {
 
     public void setDefaultCacheExpiry(long defaultCacheExpiry) {
         this.defaultCacheExpiry = defaultCacheExpiry;
-        if (this.downloader != null) {
-            downloader.setDefaultExpiry(defaultCacheExpiry);
-        }
+    }
+
+    public int getDefaultConnectTimeout() {
+        return defaultConnectTimeout;
+    }
+
+    public void setDefaultConnectTimeout(int defaultConnectTimeout) {
+        this.defaultConnectTimeout = defaultConnectTimeout;
+    }
+
+    public int getDefaultReadTimeout() {
+        return defaultReadTimeout;
+    }
+
+    public void setDefaultReadTimeout(int defaultReadTimeout) {
+        this.defaultReadTimeout = defaultReadTimeout;
     }
 
     public BitmapCache getBitmapCache() {
@@ -252,7 +268,7 @@ public class BitmapGlobalConfig {
 
         @Override
         protected Object[] doInBackground(Object... params) {
-            if (params == null || params.length < 1) return params;
+            if (params == null || params.length == 0) return params;
             BitmapCache cache = getBitmapCache();
             if (cache == null) return params;
             try {
@@ -264,7 +280,6 @@ public class BitmapGlobalConfig {
                         cache.initDiskCache();
                         break;
                     case MESSAGE_FLUSH:
-                        cache.clearMemoryCache();
                         cache.flush();
                         break;
                     case MESSAGE_CLOSE:
@@ -281,12 +296,12 @@ public class BitmapGlobalConfig {
                         cache.clearDiskCache();
                         break;
                     case MESSAGE_CLEAR_BY_KEY:
-                        if (params.length != 3) return params;
-                        cache.clearCache(String.valueOf(params[1]), (BitmapDisplayConfig) params[2]);
+                        if (params.length != 2) return params;
+                        cache.clearCache(String.valueOf(params[1]));
                         break;
                     case MESSAGE_CLEAR_MEMORY_BY_KEY:
-                        if (params.length != 3) return params;
-                        cache.clearMemoryCache(String.valueOf(params[1]), (BitmapDisplayConfig) params[2]);
+                        if (params.length != 2) return params;
+                        cache.clearMemoryCache(String.valueOf(params[1]));
                         break;
                     case MESSAGE_CLEAR_DISK_BY_KEY:
                         if (params.length != 2) return params;
@@ -303,7 +318,7 @@ public class BitmapGlobalConfig {
 
         @Override
         protected void onPostExecute(Object[] params) {
-            if (bitmapCacheListener == null || params == null || params.length < 1) return;
+            if (bitmapCacheListener == null || params == null || params.length == 0) return;
             try {
                 switch ((Integer) params[0]) {
                     case MESSAGE_INIT_MEMORY_CACHE:
@@ -328,16 +343,12 @@ public class BitmapGlobalConfig {
                         bitmapCacheListener.onClearDiskCacheFinished();
                         break;
                     case MESSAGE_CLEAR_BY_KEY:
-                        if (params.length != 3) return;
-                        bitmapCacheListener.onClearCacheFinished(
-                                String.valueOf(params[1]),
-                                (BitmapDisplayConfig) params[2]);
+                        if (params.length != 2) return;
+                        bitmapCacheListener.onClearCacheFinished(String.valueOf(params[1]));
                         break;
                     case MESSAGE_CLEAR_MEMORY_BY_KEY:
-                        if (params.length != 3) return;
-                        bitmapCacheListener.onClearMemoryCacheFinished(
-                                String.valueOf(params[1]),
-                                (BitmapDisplayConfig) params[2]);
+                        if (params.length != 2) return;
+                        bitmapCacheListener.onClearMemoryCacheFinished(String.valueOf(params[1]));
                         break;
                     case MESSAGE_CLEAR_DISK_BY_KEY:
                         if (params.length != 2) return;
@@ -364,12 +375,12 @@ public class BitmapGlobalConfig {
         new BitmapCacheManagementTask().execute(BitmapCacheManagementTask.MESSAGE_CLEAR_DISK);
     }
 
-    public void clearCache(String uri, BitmapDisplayConfig config) {
-        new BitmapCacheManagementTask().execute(BitmapCacheManagementTask.MESSAGE_CLEAR_BY_KEY, uri, config);
+    public void clearCache(String uri) {
+        new BitmapCacheManagementTask().execute(BitmapCacheManagementTask.MESSAGE_CLEAR_BY_KEY, uri);
     }
 
-    public void clearMemoryCache(String uri, BitmapDisplayConfig config) {
-        new BitmapCacheManagementTask().execute(BitmapCacheManagementTask.MESSAGE_CLEAR_MEMORY_BY_KEY, uri, config);
+    public void clearMemoryCache(String uri) {
+        new BitmapCacheManagementTask().execute(BitmapCacheManagementTask.MESSAGE_CLEAR_MEMORY_BY_KEY, uri);
     }
 
     public void clearDiskCache(String uri) {

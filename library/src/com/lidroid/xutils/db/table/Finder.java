@@ -1,6 +1,8 @@
 package com.lidroid.xutils.db.table;
 
+import android.database.Cursor;
 import com.lidroid.xutils.DbUtils;
+import com.lidroid.xutils.db.sqlite.ColumnDbType;
 import com.lidroid.xutils.db.sqlite.FinderLazyLoader;
 import com.lidroid.xutils.exception.DbException;
 import com.lidroid.xutils.util.LogUtils;
@@ -17,14 +19,14 @@ public class Finder extends Column {
 
     public DbUtils db;
 
-    private String valueColumnName;
-
-    private String targetColumnName;
+    private final String valueColumnName;
+    private final String targetColumnName;
 
     protected Finder(Class<?> entityType, Field field) {
         super(entityType, field);
 
-        com.lidroid.xutils.db.annotation.Finder finder = field.getAnnotation(com.lidroid.xutils.db.annotation.Finder.class);
+        com.lidroid.xutils.db.annotation.Finder finder =
+                field.getAnnotation(com.lidroid.xutils.db.annotation.Finder.class);
         this.valueColumnName = finder.valueColumn();
         this.targetColumnName = finder.targetColumn();
     }
@@ -33,8 +35,12 @@ public class Finder extends Column {
         return ColumnUtils.getFinderTargetEntityType(this);
     }
 
+    public String getTargetColumnName() {
+        return targetColumnName;
+    }
+
     @Override
-    public void setValue2Entity(Object entity, String valueStr) {
+    public void setValue2Entity(Object entity, Cursor cursor, int index) {
         Object value = null;
         Class<?> columnType = columnField.getType();
         Object finderValue = TableUtils.getColumnOrId(entity.getClass(), this.valueColumnName).getColumnValue(entity);
@@ -70,34 +76,9 @@ public class Finder extends Column {
         }
     }
 
-    public String getTargetColumnName() {
-        return targetColumnName;
-    }
-
     @Override
     public Object getColumnValue(Object entity) {
         return null;
-    }
-
-    public Object getFieldValue(Object entity) {
-        Object valueObj = null;
-        if (entity != null) {
-            if (getMethod != null) {
-                try {
-                    valueObj = getMethod.invoke(entity);
-                } catch (Throwable e) {
-                    LogUtils.e(e.getMessage(), e);
-                }
-            } else {
-                try {
-                    this.columnField.setAccessible(true);
-                    valueObj = this.columnField.get(entity);
-                } catch (Throwable e) {
-                    LogUtils.e(e.getMessage(), e);
-                }
-            }
-        }
-        return valueObj;
     }
 
     @Override
@@ -106,7 +87,7 @@ public class Finder extends Column {
     }
 
     @Override
-    public String getColumnDbType() {
-        return "";
+    public ColumnDbType getColumnDbType() {
+        return ColumnDbType.TEXT;
     }
 }

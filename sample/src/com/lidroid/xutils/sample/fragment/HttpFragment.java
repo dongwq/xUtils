@@ -1,5 +1,7 @@
 package com.lidroid.xutils.sample.fragment;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -10,17 +12,24 @@ import android.widget.EditText;
 import android.widget.TextView;
 import com.lidroid.xutils.HttpUtils;
 import com.lidroid.xutils.ViewUtils;
+import com.lidroid.xutils.exception.DbException;
 import com.lidroid.xutils.exception.HttpException;
-import com.lidroid.xutils.http.HttpHandler;
-import com.lidroid.xutils.http.RequestCallBack;
+import com.lidroid.xutils.http.RequestParams;
 import com.lidroid.xutils.http.ResponseInfo;
+import com.lidroid.xutils.http.ResponseStream;
+import com.lidroid.xutils.http.callback.RequestCallBack;
 import com.lidroid.xutils.http.client.HttpRequest;
-import com.lidroid.xutils.http.client.RequestParams;
-import com.lidroid.xutils.http.client.ResponseStream;
+import com.lidroid.xutils.sample.DownloadListActivity;
 import com.lidroid.xutils.sample.R;
+import com.lidroid.xutils.sample.download.DownloadManager;
+import com.lidroid.xutils.sample.download.DownloadService;
+import com.lidroid.xutils.util.CookieUtils;
 import com.lidroid.xutils.util.LogUtils;
+import com.lidroid.xutils.view.ResType;
+import com.lidroid.xutils.view.annotation.ResInject;
 import com.lidroid.xutils.view.annotation.ViewInject;
 import com.lidroid.xutils.view.annotation.event.OnClick;
+import org.apache.http.impl.cookie.BasicClientCookie;
 
 import java.io.File;
 
@@ -31,20 +40,29 @@ import java.io.File;
  */
 public class HttpFragment extends Fragment {
 
-    private HttpHandler handler;
+    //private HttpHandler handler;
+
+    private Context mAppContext;
+    private DownloadManager downloadManager;
+
+    private CookieUtils cookieUtils;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.http_fragment, container, false);
         ViewUtils.inject(this, view);
-        return view;
-    }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        downloadBtn.setEnabled(handler == null || handler.isStopped());
-        stopBtn.setEnabled(!downloadBtn.isEnabled());
+        mAppContext = inflater.getContext().getApplicationContext();
+
+        downloadManager = DownloadService.getDownloadManager(mAppContext);
+
+        cookieUtils = new CookieUtils(mAppContext);
+        BasicClientCookie cookie = new BasicClientCookie("test", "hello");
+        cookie.setDomain("192.168.1.5");
+        cookie.setPath("/");
+        cookieUtils.addCookie(cookie);
+
+        return view;
     }
 
     @ViewInject(R.id.download_addr_edit)
@@ -53,79 +71,68 @@ public class HttpFragment extends Fragment {
     @ViewInject(R.id.download_btn)
     private Button downloadBtn;
 
-    @ViewInject(R.id.stop_btn)
-    private Button stopBtn;
+    @ViewInject(R.id.download_page_btn)
+    private Button downloadPageBtn;
 
     @ViewInject(R.id.result_txt)
     private TextView resultText;
 
+    @ResInject(id = R.string.download_label, type = ResType.String)
+    private String label;
+
     @OnClick(R.id.download_btn)
     public void download(View view) {
-
-        downloadBtn.setEnabled(false);
-        stopBtn.setEnabled(true);
-
-        HttpUtils http = new HttpUtils();
-        handler = http.download(
-                downloadAddrEdit.getText().toString(),
-                "/sdcard/lzfile.apk",
-                true, // 如果目标文件存在，接着未完成的部分继续下载。服务器不支持RANGE时将从新下载。
-                true, // 如果从请求返回信息中获取到文件名，下载完成后自动重命名。
-                //new RequestCallBack<File>() { // userTag is null
-                new RequestCallBack<File>("my custom tag") {
-
-                    @Override
-                    public void onStart() {
-                        resultText.setText("conn..." + "\n" + this.userTag);
-                    }
-
-                    @Override
-                    public void onLoading(long total, long current, boolean isUploading) {
-                        resultText.setText(current + "/" + total);
-                    }
-
-                    @Override
-                    public void onSuccess(ResponseInfo<File> responseInfo) {
-                        resultText.setText("downloaded:" + responseInfo.result.getPath());
-                        downloadBtn.setEnabled(false);
-                        stopBtn.setEnabled(false);
-                    }
-
-                    @Override
-                    public void onFailure(HttpException error, String msg) {
-                        // error.getCause(); //内部错误
-                        resultText.setText(error.getExceptionCode() + ":" + msg);
-                        downloadBtn.setEnabled(true);
-                        stopBtn.setEnabled(false);
-                    }
-                });
+        String target = "/sdcard/xUtils/" + System.currentTimeMillis() + "lzfile.apk";
+        try {
+            downloadManager.addNewDownload(downloadAddrEdit.getText().toString(),
+                    "力卓文件",
+                    target,
+                    true, // 如果目标文件存在，接着未完成的部分继续下载。服务器不支持RANGE时将从新下载。
+                    false, // 如果从请求返回信息中获取到文件名，下载完成后自动重命名。
+                    null);
+        } catch (DbException e) {
+            LogUtils.e(e.getMessage(), e);
+        }
     }
 
-    @OnClick(R.id.stop_btn)
-    public void stop(View view) {
-        if (handler != null) {
-            handler.stop();
-            resultText.setText(resultText.getText() + " stopped");
-            downloadBtn.setEnabled(true);
-            stopBtn.setEnabled(false);
-        }
+    @OnClick(R.id.download_page_btn)
+    public void downloadPage(View view) {
+        Intent intent = new Intent(this.getActivity(), DownloadListActivity.class);
+        this.getActivity().startActivity(intent);
     }
 
     /////////////////////////////////////// other ////////////////////////////////////////////////////////////////
 
     //@OnClick(R.id.download_btn)
     public void testUpload(View view) {
-        RequestParams params = new RequestParams();
-        //params.addQueryStringParameter("method", "upload");
-        //params.addQueryStringParameter("path", "/apps/测试应用/test.zip");
-        // 请在百度的开放api测试页面找到自己的access_token
-        //params.addQueryStringParameter("access_token",
-        //        "3.9b885b6c56b8798ab69b3ba39238e4fc.2592000.1384929178.3590808424-248414");
+
+        // 设置请求参数的编码
+        //RequestParams params = new RequestParams("GBK");
+        RequestParams params = new RequestParams(); // 默认编码UTF-8
+
+        //params.addQueryStringParameter("qmsg", "你好");
+        //params.addBodyParameter("msg", "测试");
+
+        // 添加文件
         params.addBodyParameter("file", new File("/sdcard/test.zip"));
+        //params.addBodyParameter("testfile", new File("/sdcard/test2.zip")); // 继续添加文件
+
+        // 用于非multipart表单的单文件上传
+        //params.setBodyEntity(new FileUploadEntity(new File("/sdcard/test.zip"), "binary/octet-stream"));
+
+        // 用于非multipart表单的流上传
+        //params.setBodyEntity(new InputStreamUploadEntity(stream ,length));
 
         HttpUtils http = new HttpUtils();
+
+        // 设置返回文本的编码， 默认编码UTF-8
+        //http.configResponseTextCharset("GBK");
+
+        // 自动管理 cookie
+        http.configCookieStore(cookieUtils);
+
         http.send(HttpRequest.HttpMethod.POST,
-                "http://192.168.1.6:8080/UploadServlet",
+                "http://192.168.1.5:8080/UploadServlet",
                 params,
                 new RequestCallBack<String>() {
 
@@ -164,7 +171,7 @@ public class HttpFragment extends Fragment {
         //params.addQueryStringParameter("name", "value");
 
         HttpUtils http = new HttpUtils();
-        http.configCurrentHttpGetCacheExpiry(1000 * 10);
+        http.configCurrentHttpCacheExpiry(1000 * 10);
         http.send(HttpRequest.HttpMethod.GET,
                 "http://www.baidu.com",
                 //params,
@@ -221,7 +228,6 @@ public class HttpFragment extends Fragment {
                         resultText.setText("upload response:" + responseInfo.result);
                     }
 
-
                     @Override
                     public void onFailure(HttpException error, String msg) {
                         resultText.setText(msg);
@@ -235,7 +241,7 @@ public class HttpFragment extends Fragment {
         params.addQueryStringParameter("wd", "lidroid");
 
         HttpUtils http = new HttpUtils();
-        http.configCurrentHttpGetCacheExpiry(1000 * 10);
+        http.configCurrentHttpCacheExpiry(1000 * 10);
         try {
             ResponseStream responseStream = http.sendSync(HttpRequest.HttpMethod.GET, "http://www.baidu.com/s", params);
             //int statusCode = responseStream.getStatusCode();

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package com.lidroid.xutils.http.client.callback;
+package com.lidroid.xutils.http.callback;
 
 import android.text.TextUtils;
 import com.lidroid.xutils.util.IOUtils;
@@ -35,6 +35,10 @@ public class FileDownloadHandler {
         File targetFile = new File(target);
 
         if (!targetFile.exists()) {
+            File dir = targetFile.getParentFile();
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
             targetFile.createNewFile();
         }
 

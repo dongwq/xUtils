@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package com.lidroid.xutils.http;
+package com.lidroid.xutils.http.client;
 
 import android.os.SystemClock;
 import com.lidroid.xutils.util.LogUtils;
@@ -62,8 +62,8 @@ public class RetryHandler implements HttpRequestRetryHandler {
             return false;
         }
 
-        Boolean b = (Boolean) context.getAttribute(ExecutionContext.HTTP_REQ_SENT);
-        boolean sent = (b != null && b.booleanValue());
+        Object isReqSent = context.getAttribute(ExecutionContext.HTTP_REQ_SENT);
+        boolean sent = isReqSent == null ? false : (Boolean) isReqSent;
 
         if (retriedTimes > maxRetries) {
             retry = false;

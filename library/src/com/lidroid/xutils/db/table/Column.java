@@ -15,6 +15,10 @@
 
 package com.lidroid.xutils.db.table;
 
+import android.database.Cursor;
+import com.lidroid.xutils.db.converter.ColumnConverter;
+import com.lidroid.xutils.db.converter.ColumnConverterFactory;
+import com.lidroid.xutils.db.sqlite.ColumnDbType;
 import com.lidroid.xutils.util.LogUtils;
 
 import java.lang.reflect.Field;
@@ -22,30 +26,33 @@ import java.lang.reflect.Method;
 
 public class Column {
 
-    protected String columnName;
-    private Object defaultValue;
+    protected final String columnName;
+    private final Object defaultValue;
 
-    protected Method getMethod;
-    protected Method setMethod;
+    protected final Method getMethod;
+    protected final Method setMethod;
 
-    protected Field columnField;
+    protected final Field columnField;
+    protected final ColumnConverter columnConverter;
 
     protected Column(Class<?> entityType, Field field) {
         this.columnField = field;
+        this.columnConverter = ColumnConverterFactory.getColumnConverter(field.getType());
         this.columnName = ColumnUtils.getColumnNameByField(field);
-        this.defaultValue = ColumnUtils.getColumnDefaultValue(field);
+        if (this.columnConverter != null) {
+            this.defaultValue = this.columnConverter.getFiledValue(ColumnUtils.getColumnDefaultValue(field));
+        } else {
+            this.defaultValue = null;
+        }
         this.getMethod = ColumnUtils.getColumnGetMethod(entityType, field);
         this.setMethod = ColumnUtils.getColumnSetMethod(entityType, field);
     }
 
     @SuppressWarnings("unchecked")
-    public void setValue2Entity(Object entity, String valueStr) {
+    public void setValue2Entity(Object entity, Cursor cursor, int index) {
 
-        Object value = null;
-        if (valueStr != null) {
-            Class<?> columnType = columnField.getType();
-            value = ColumnUtils.valueStr2SimpleTypeFieldValue(columnType, valueStr);
-        }
+        Object value = columnConverter.getFiledValue(cursor, index);
+        if (value == null && defaultValue == null) return;
 
         if (setMethod != null) {
             try {
@@ -65,24 +72,29 @@ public class Column {
 
     @SuppressWarnings("unchecked")
     public Object getColumnValue(Object entity) {
-        Object resultObj = null;
+        Object fieldValue = getFieldValue(entity);
+        return columnConverter.fieldValue2ColumnValue(fieldValue);
+    }
+
+    public Object getFieldValue(Object entity) {
+        Object fieldValue = null;
         if (entity != null) {
             if (getMethod != null) {
                 try {
-                    resultObj = getMethod.invoke(entity);
+                    fieldValue = getMethod.invoke(entity);
                 } catch (Throwable e) {
                     LogUtils.e(e.getMessage(), e);
                 }
             } else {
                 try {
                     this.columnField.setAccessible(true);
-                    resultObj = this.columnField.get(entity);
+                    fieldValue = this.columnField.get(entity);
                 } catch (Throwable e) {
                     LogUtils.e(e.getMessage(), e);
                 }
             }
         }
-        return ColumnUtils.convert2DbColumnValueIfNeeded(resultObj);
+        return fieldValue;
     }
 
     public String getColumnName() {
@@ -97,7 +109,7 @@ public class Column {
         return columnField;
     }
 
-    public String getColumnDbType() {
-        return ColumnUtils.fieldType2DbType(columnField.getType());
+    public ColumnDbType getColumnDbType() {
+        return columnConverter.getColumnDbType();
     }
 }

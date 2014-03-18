@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package com.lidroid.xutils.http.client;
+package com.lidroid.xutils.http;
 
 import com.lidroid.xutils.HttpUtils;
 import com.lidroid.xutils.util.IOUtils;
@@ -35,14 +35,15 @@ public class ResponseStream extends InputStream {
 
     private String charset;
 
-    private String url;
+    private String requestUrl;
+    private String requestMethod;
     private long expiry;
 
-    public ResponseStream(HttpResponse baseResponse, String url, long expiry) throws IOException {
-        this(baseResponse, HTTP.UTF_8, url, expiry);
+    public ResponseStream(HttpResponse baseResponse, String requestUrl, long expiry) throws IOException {
+        this(baseResponse, HTTP.UTF_8, requestUrl, expiry);
     }
 
-    public ResponseStream(HttpResponse baseResponse, String charset, String url, long expiry) throws IOException {
+    public ResponseStream(HttpResponse baseResponse, String charset, String requestUrl, long expiry) throws IOException {
         if (baseResponse == null) {
             throw new IllegalArgumentException("baseResponse may not be null");
         }
@@ -50,7 +51,7 @@ public class ResponseStream extends InputStream {
         this.baseResponse = baseResponse;
         this.baseStream = baseResponse.getEntity().getContent();
         this.charset = charset;
-        this.url = url;
+        this.requestUrl = requestUrl;
         this.expiry = expiry;
     }
 
@@ -62,6 +63,18 @@ public class ResponseStream extends InputStream {
         }
 
         _directResult = result;
+    }
+
+    public String getRequestUrl() {
+        return requestUrl;
+    }
+
+    public String getRequestMethod() {
+        return requestMethod;
+    }
+
+    /*package*/ void setRequestMethod(String requestMethod) {
+        this.requestMethod = requestMethod;
     }
 
     public InputStream getBaseStream() {
@@ -98,8 +111,8 @@ public class ResponseStream extends InputStream {
                 sb.append(line);
             }
             _directResult = sb.toString();
-            if (url != null) {
-                HttpUtils.sHttpGetCache.put(url, _directResult, expiry);
+            if (requestUrl != null && HttpUtils.sHttpCache.isEnabled(requestMethod)) {
+                HttpUtils.sHttpCache.put(requestUrl, _directResult, expiry);
             }
             return _directResult;
         } finally {

@@ -13,16 +13,20 @@
  * limitations under the License.
  */
 
-package com.lidroid.xutils.http.client;
+package com.lidroid.xutils.http;
 
+import android.text.TextUtils;
+import com.lidroid.xutils.http.client.HttpRequest;
 import com.lidroid.xutils.util.core.LruMemoryCache;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Author: wyouflf
  * Date: 13-8-1
  * Time: 下午12:04
  */
-public class HttpGetCache {
+public class HttpCache {
 
     /**
      * key: url
@@ -32,26 +36,21 @@ public class HttpGetCache {
 
     private final static int DEFAULT_CACHE_SIZE = 1024 * 100;// string length
     private final static long DEFAULT_EXPIRY_TIME = 1000 * 60; // 60 seconds
-    private final static long MIN_EXPIRY_TIME = 200;
 
     private int cacheSize = DEFAULT_CACHE_SIZE;
-
-    private boolean enabled = true;
 
     private static long defaultExpiryTime = DEFAULT_EXPIRY_TIME;
 
     /**
-     * HttpGetCache(HttpGetCache.DEFAULT_CACHE_SIZE, HttpGetCache.DEFAULT_EXPIRY_TIME);
+     * HttpCache(HttpCache.DEFAULT_CACHE_SIZE, HttpCache.DEFAULT_EXPIRY_TIME);
      */
-    public HttpGetCache() {
-        this(HttpGetCache.DEFAULT_CACHE_SIZE, HttpGetCache.DEFAULT_EXPIRY_TIME);
+    public HttpCache() {
+        this(HttpCache.DEFAULT_CACHE_SIZE, HttpCache.DEFAULT_EXPIRY_TIME);
     }
 
-    public HttpGetCache(int strLength, long defaultExpiryTime) {
-        if (strLength > DEFAULT_CACHE_SIZE) {
-            this.cacheSize = strLength;
-        }
-        HttpGetCache.setDefaultExpiryTime(defaultExpiryTime);
+    public HttpCache(int strLength, long defaultExpiryTime) {
+        this.cacheSize = strLength;
+        HttpCache.defaultExpiryTime = defaultExpiryTime;
 
         mMemoryCache = new LruMemoryCache<String, String>(this.cacheSize) {
             @Override
@@ -63,21 +62,15 @@ public class HttpGetCache {
     }
 
     public void setCacheSize(int strLength) {
-        if (strLength > DEFAULT_CACHE_SIZE) {
-            mMemoryCache.setMaxSize(strLength);
-        }
+        mMemoryCache.setMaxSize(strLength);
     }
 
     public static void setDefaultExpiryTime(long defaultExpiryTime) {
-        if (defaultExpiryTime > MIN_EXPIRY_TIME) {
-            HttpGetCache.defaultExpiryTime = defaultExpiryTime;
-        } else {
-            HttpGetCache.defaultExpiryTime = MIN_EXPIRY_TIME;
-        }
+        HttpCache.defaultExpiryTime = defaultExpiryTime;
     }
 
     public static long getDefaultExpiryTime() {
-        return HttpGetCache.defaultExpiryTime;
+        return HttpCache.defaultExpiryTime;
     }
 
     public void put(String url, String result) {
@@ -85,27 +78,41 @@ public class HttpGetCache {
     }
 
     public void put(String url, String result, long expiry) {
-        if (!enabled || url == null || result == null) return;
+        if (url == null || result == null || expiry < 1) return;
 
-        if (expiry < MIN_EXPIRY_TIME) {
-            expiry = MIN_EXPIRY_TIME;
-        }
         mMemoryCache.put(url, result, System.currentTimeMillis() + expiry);
     }
 
     public String get(String url) {
-        return enabled ? mMemoryCache.get(url) : null;
+        return (url != null) ? mMemoryCache.get(url) : null;
     }
 
     public void clear() {
         mMemoryCache.evictAll();
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public boolean isEnabled(HttpRequest.HttpMethod method) {
+        if (method == null) return false;
+
+        Boolean enabled = httpMethod_enabled_map.get(method.toString());
+        return enabled == null ? false : enabled;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    public boolean isEnabled(String method) {
+        if (TextUtils.isEmpty(method)) return false;
+
+        Boolean enabled = httpMethod_enabled_map.get(method.toUpperCase());
+        return enabled == null ? false : enabled;
+    }
+
+    public void setEnabled(HttpRequest.HttpMethod method, boolean enabled) {
+        httpMethod_enabled_map.put(method.toString(), enabled);
+    }
+
+    private final static ConcurrentHashMap<String, Boolean> httpMethod_enabled_map;
+
+    static {
+        httpMethod_enabled_map = new ConcurrentHashMap<String, Boolean>(10);
+        httpMethod_enabled_map.put(HttpRequest.HttpMethod.GET.toString(), true);
     }
 }

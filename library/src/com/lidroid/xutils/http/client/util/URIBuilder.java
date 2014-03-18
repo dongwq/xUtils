@@ -16,11 +16,10 @@
 package com.lidroid.xutils.http.client.util;
 
 import android.text.TextUtils;
-
+import com.lidroid.xutils.util.LogUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.conn.util.InetAddressUtils;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,11 +28,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * {@link java.net.URI} builder for HTTP requests.
- *
- * @since 4.2
- */
 public class URIBuilder {
 
     private String scheme;
@@ -50,92 +44,20 @@ public class URIBuilder {
     private String fragment;
     private String encodedFragment;
 
-    /**
-     * Constructs an empty instance.
-     */
     public URIBuilder() {
-        super();
         this.port = -1;
     }
 
-    /**
-     * Construct an instance from the string which must be a valid URI.
-     *
-     * @param string a valid URI in string form
-     * @throws java.net.URISyntaxException if the input is not a valid URI
-     */
-    public URIBuilder(final String string) throws URISyntaxException {
-        super();
-        digestURI(new URI(string));
+    public URIBuilder(final String uri) {
+        try {
+            digestURI(new URI(uri));
+        } catch (URISyntaxException e) {
+            LogUtils.e(e.getMessage(), e);
+        }
     }
 
-    /**
-     * Construct an instance from the provided URI.
-     *
-     * @param uri
-     */
     public URIBuilder(final URI uri) {
-        super();
         digestURI(uri);
-    }
-
-    private List<NameValuePair> parseQuery(final String query, final Charset charset) {
-        if (!TextUtils.isEmpty(query)) {
-            return URLEncodedUtils.parse(query, charset);
-        }
-        return null;
-    }
-
-    /**
-     * Builds a {@link java.net.URI} instance.
-     */
-    public URI build() throws URISyntaxException {
-        return new URI(buildString());
-    }
-
-    private String buildString() {
-        StringBuilder sb = new StringBuilder();
-        if (this.scheme != null) {
-            sb.append(this.scheme).append(':');
-        }
-        if (this.encodedSchemeSpecificPart != null) {
-            sb.append(this.encodedSchemeSpecificPart);
-        } else {
-            if (this.encodedAuthority != null) {
-                sb.append("//").append(this.encodedAuthority);
-            } else if (this.host != null) {
-                sb.append("//");
-                if (this.encodedUserInfo != null) {
-                    sb.append(this.encodedUserInfo).append("@");
-                } else if (this.userInfo != null) {
-                    sb.append(encodeUserInfo(this.userInfo)).append("@");
-                }
-                if (InetAddressUtils.isIPv6Address(this.host)) {
-                    sb.append("[").append(this.host).append("]");
-                } else {
-                    sb.append(this.host);
-                }
-                if (this.port >= 0) {
-                    sb.append(":").append(this.port);
-                }
-            }
-            if (this.encodedPath != null) {
-                sb.append(normalizePath(this.encodedPath));
-            } else if (this.path != null) {
-                sb.append(encodePath(normalizePath(this.path)));
-            }
-            if (this.encodedQuery != null) {
-                sb.append("?").append(this.encodedQuery);
-            } else if (this.queryParams != null) {
-                sb.append("?").append(encodeQuery(this.queryParams));
-            }
-        }
-        if (this.encodedFragment != null) {
-            sb.append("#").append(this.encodedFragment);
-        } else if (this.fragment != null) {
-            sb.append("#").append(encodeFragment(this.fragment));
-        }
-        return sb.toString();
     }
 
     private void digestURI(final URI uri) {
@@ -149,25 +71,86 @@ public class URIBuilder {
         this.encodedPath = uri.getRawPath();
         this.path = uri.getPath();
         this.encodedQuery = uri.getRawQuery();
-        this.queryParams = parseQuery(uri.getRawQuery(), Charset.forName(HTTP.UTF_8));
+        this.queryParams = parseQuery(uri.getRawQuery());
         this.encodedFragment = uri.getRawFragment();
         this.fragment = uri.getFragment();
     }
 
-    private String encodeUserInfo(final String userInfo) {
-        return URLEncodedUtils.encUserInfo(userInfo, Charset.forName(HTTP.UTF_8));
+    private List<NameValuePair> parseQuery(final String query) {
+        if (!TextUtils.isEmpty(query)) {
+            return URLEncodedUtils.parse(query);
+        }
+        return null;
     }
 
-    private String encodePath(final String path) {
-        return URLEncodedUtils.encPath(path, Charset.forName(HTTP.UTF_8));
+    /**
+     * Builds a {@link java.net.URI} instance.
+     *
+     * @param charset
+     */
+    public URI build(Charset charset) throws URISyntaxException {
+        return new URI(buildString(charset));
     }
 
-    private String encodeQuery(final List<NameValuePair> params) {
-        return URLEncodedUtils.format(params, Charset.forName(HTTP.UTF_8));
+    private String buildString(Charset charset) {
+        final StringBuilder sb = new StringBuilder();
+        if (this.scheme != null) {
+            sb.append(this.scheme).append(':');
+        }
+        if (this.encodedSchemeSpecificPart != null) {
+            sb.append(this.encodedSchemeSpecificPart);
+        } else {
+            if (this.encodedAuthority != null) {
+                sb.append("//").append(this.encodedAuthority);
+            } else if (this.host != null) {
+                sb.append("//");
+                if (this.encodedUserInfo != null) {
+                    sb.append(this.encodedUserInfo).append("@");
+                } else if (this.userInfo != null) {
+                    sb.append(encodeUserInfo(this.userInfo, charset)).append("@");
+                }
+                if (InetAddressUtils.isIPv6Address(this.host)) {
+                    sb.append("[").append(this.host).append("]");
+                } else {
+                    sb.append(this.host);
+                }
+                if (this.port >= 0) {
+                    sb.append(":").append(this.port);
+                }
+            }
+            if (this.encodedPath != null) {
+                sb.append(normalizePath(this.encodedPath));
+            } else if (this.path != null) {
+                sb.append(encodePath(normalizePath(this.path), charset));
+            }
+            if (this.encodedQuery != null) {
+                sb.append("?").append(this.encodedQuery);
+            } else if (this.queryParams != null) {
+                sb.append("?").append(encodeQuery(this.queryParams, charset));
+            }
+        }
+        if (this.encodedFragment != null) {
+            sb.append("#").append(this.encodedFragment);
+        } else if (this.fragment != null) {
+            sb.append("#").append(encodeFragment(this.fragment, charset));
+        }
+        return sb.toString();
     }
 
-    private String encodeFragment(final String fragment) {
-        return URLEncodedUtils.encFragment(fragment, Charset.forName(HTTP.UTF_8));
+    private String encodeUserInfo(final String userInfo, Charset charset) {
+        return URLEncodedUtils.encUserInfo(userInfo, charset);
+    }
+
+    private String encodePath(final String path, Charset charset) {
+        return URLEncodedUtils.encPath(path, charset).replace("+", "20%");
+    }
+
+    private String encodeQuery(final List<NameValuePair> params, Charset charset) {
+        return URLEncodedUtils.format(params, charset);
+    }
+
+    private String encodeFragment(final String fragment, Charset charset) {
+        return URLEncodedUtils.encFragment(fragment, charset);
     }
 
     /**
@@ -229,22 +212,12 @@ public class URIBuilder {
     }
 
     /**
-     * Removes URI query.
-     */
-    public URIBuilder removeQuery() {
-        this.queryParams = null;
-        this.encodedQuery = null;
-        this.encodedSchemeSpecificPart = null;
-        return this;
-    }
-
-    /**
      * Sets URI query.
      * <p/>
      * The value is expected to be encoded form data.
      */
     public URIBuilder setQuery(final String query) {
-        this.queryParams = parseQuery(query, Charset.forName(HTTP.UTF_8));
+        this.queryParams = parseQuery(query);
         this.encodedQuery = null;
         this.encodedSchemeSpecificPart = null;
         return this;
@@ -273,8 +246,8 @@ public class URIBuilder {
             this.queryParams = new ArrayList<NameValuePair>();
         }
         if (!this.queryParams.isEmpty()) {
-            for (Iterator<NameValuePair> it = this.queryParams.iterator(); it.hasNext(); ) {
-                NameValuePair nvp = it.next();
+            for (final Iterator<NameValuePair> it = this.queryParams.iterator(); it.hasNext(); ) {
+                final NameValuePair nvp = it.next();
                 if (nvp.getName().equals(param)) {
                     it.remove();
                 }
@@ -326,11 +299,6 @@ public class URIBuilder {
 
     public String getFragment() {
         return this.fragment;
-    }
-
-    @Override
-    public String toString() {
-        return buildString();
     }
 
     private static String normalizePath(String path) {

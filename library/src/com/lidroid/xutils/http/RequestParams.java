@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-package com.lidroid.xutils.http.client;
+package com.lidroid.xutils.http;
 
+import android.text.TextUtils;
 import com.lidroid.xutils.http.client.entity.BodyParamsEntity;
 import com.lidroid.xutils.http.client.multipart.HttpMultipartMode;
 import com.lidroid.xutils.http.client.multipart.MultipartEntity;
@@ -33,6 +34,7 @@ import org.apache.http.protocol.HTTP;
 import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -54,7 +56,17 @@ public class RequestParams {
     }
 
     public RequestParams(String charset) {
-        this.charset = charset;
+        if (!TextUtils.isEmpty(charset)) {
+            this.charset = charset;
+        }
+    }
+
+    public String getCharset() {
+        return charset;
+    }
+
+    public void setContentType(String contentType) {
+        this.setHeader("Content-Type", contentType);
     }
 
     /**
@@ -208,6 +220,20 @@ public class RequestParams {
         fileParams.put(key, new FileBody(file, mimeType, charset));
     }
 
+    public void addBodyParameter(String key, File file, String fileName, String mimeType, String charset) {
+        if (fileParams == null) {
+            fileParams = new HashMap<String, ContentBody>();
+        }
+        fileParams.put(key, new FileBody(file, fileName, mimeType, charset));
+    }
+
+    public void addBodyParameter(String key, InputStream stream, long length) {
+        if (fileParams == null) {
+            fileParams = new HashMap<String, ContentBody>();
+        }
+        fileParams.put(key, new InputStreamBody(stream, length));
+    }
+
     public void addBodyParameter(String key, InputStream stream, long length, String fileName) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
@@ -215,11 +241,11 @@ public class RequestParams {
         fileParams.put(key, new InputStreamBody(stream, length, fileName));
     }
 
-    public void addBodyParameter(String key, InputStream stream, long length, String mimeType, String fileName) {
+    public void addBodyParameter(String key, InputStream stream, long length, String fileName, String mimeType) {
         if (fileParams == null) {
             fileParams = new HashMap<String, ContentBody>();
         }
-        fileParams.put(key, new InputStreamBody(stream, length, mimeType, fileName));
+        fileParams.put(key, new InputStreamBody(stream, length, fileName, mimeType));
     }
 
     public void setBodyEntity(HttpEntity bodyEntity) {
@@ -247,7 +273,7 @@ public class RequestParams {
 
         if (fileParams != null && !fileParams.isEmpty()) {
 
-            MultipartEntity multipartEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+            MultipartEntity multipartEntity = new MultipartEntity(HttpMultipartMode.STRICT, null, Charset.forName(charset));
 
             if (bodyParams != null && !bodyParams.isEmpty()) {
                 for (NameValuePair param : bodyParams.values()) {
